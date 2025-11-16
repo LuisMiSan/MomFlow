@@ -1,0 +1,8 @@
+{
+  "name": "MomFlow",
+  "description": "Asistente móvil inteligente para madres trabajadoras que combina agenda unificada, recordatorios multiformato e IA empática para reducir la carga mental y equilibrar trabajo, hogar y autocuidado.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
