@@ -37,3 +37,11 @@ export interface TaskList {
   icon: string; // emoji character
   tasks: Task[];
 }
+
+export interface Contact {
+  id: string;
+  name: string;
+  relation: string;
+  phone: string;
+  notes?: string;
+}

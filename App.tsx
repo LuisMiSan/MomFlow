@@ -2,14 +2,16 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Dashboard from './components/Dashboard';
 import AssistantChat from './components/AssistantChat';
-import { PlusIcon, MicrophoneIcon, CameraIcon, PencilIcon, XMarkIcon, WhatsAppIcon, ClipboardListIcon } from './components/Icons';
+import { PlusIcon, MicrophoneIcon, CameraIcon, PencilIcon, XMarkIcon, WhatsAppIcon, ClipboardListIcon, ShoppingBagIcon } from './components/Icons';
 import CalendarScreen from './components/CalendarScreen';
 import WellbeingScreen from './components/WellbeingScreen';
 import SettingsScreen from './components/SettingsScreen';
 import TasksScreen from './components/TasksScreen';
-import { TaskList, Event, Category, CategoryConfig } from './types';
+import ContactsScreen from './components/ContactsScreen';
+import ShoppingScreen from './components/ShoppingScreen';
+import { TaskList, Event, Category, CategoryConfig, Contact } from './types';
 
-type Screen = 'dashboard' | 'calendar' | 'tasks' | 'wellbeing' | 'settings';
+type Screen = 'dashboard' | 'calendar' | 'tasks' | 'wellbeing' | 'contacts' | 'shopping' | 'settings';
 
 const initialTaskLists: TaskList[] = [
   {
@@ -48,6 +50,12 @@ const initialTaskLists: TaskList[] = [
       { id: 't3-1', text: 'Llamar al fontanero', completed: true },
     ],
   },
+];
+
+const initialContacts: Contact[] = [
+    { id: 'c-1', name: 'Dr. López', relation: 'Pediatra', phone: '912 345 678', notes: 'Centro de Salud Central' },
+    { id: 'c-2', name: 'Colegio Sol', relation: 'Colegio', phone: '911 223 344', notes: 'Preguntar por la tutora Ana.' },
+    { id: 'c-3', name: 'Abuela María', relation: 'Familia', phone: '612 345 678' },
 ];
 
 const DEFAULT_CATEGORY_CONFIGS: CategoryConfig[] = [
@@ -126,6 +134,16 @@ const App: React.FC = () => {
   const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState(false);
   const [taskLists, setTaskLists] = useState<TaskList[]>(initialTaskLists);
   const [momFlowEvents, setMomFlowEvents] = useState<Event[]>(initialMomFlowEvents);
+
+  const [contacts, setContacts] = useState<Contact[]>(() => {
+    try {
+      const storedContacts = localStorage.getItem('momflow-contacts');
+      return storedContacts ? JSON.parse(storedContacts) : initialContacts;
+    } catch (error) {
+      console.error("Error loading contacts from localStorage:", error);
+      return initialContacts;
+    }
+  });
   
   const [categoryConfigs, setCategoryConfigs] = useState<CategoryConfig[]>(() => {
     try {
@@ -163,6 +181,14 @@ const App: React.FC = () => {
         console.error("Error saving categories to localStorage:", error);
     }
   }, [categoryConfigs]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('momflow-contacts', JSON.stringify(contacts));
+    } catch (error) {
+      console.error("Error saving contacts to localStorage:", error);
+    }
+  }, [contacts]);
 
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -279,6 +305,10 @@ const App: React.FC = () => {
         return <TasksScreen taskLists={taskLists} setTaskLists={setTaskLists} onVoiceAddTask={openAssistantForVoiceTask} />;
       case 'wellbeing':
         return <WellbeingScreen categoryConfigs={categoryConfigs} />;
+      case 'contacts':
+        return <ContactsScreen contacts={contacts} setContacts={setContacts} />;
+      case 'shopping':
+        return <ShoppingScreen />;
       case 'settings':
         return <SettingsScreen 
                   isWhatsAppConnected={isWhatsAppConnected} 
@@ -349,6 +379,14 @@ const App: React.FC = () => {
           <button onClick={() => setActiveScreen('tasks')} className={`flex flex-col items-center space-y-1 ${activeScreen === 'tasks' ? 'text-momflow-lavender-dark' : 'text-momflow-text-light'}`}>
             <ClipboardListIcon className="w-6 h-6" />
             <span className="text-xs">Tareas</span>
+          </button>
+          <button onClick={() => setActiveScreen('shopping')} className={`flex flex-col items-center space-y-1 ${activeScreen === 'shopping' ? 'text-momflow-lavender-dark' : 'text-momflow-text-light'}`}>
+            <ShoppingBagIcon className="w-6 h-6" />
+            <span className="text-xs">Compras</span>
+          </button>
+           <button onClick={() => setActiveScreen('contacts')} className={`flex flex-col items-center space-y-1 ${activeScreen === 'contacts' ? 'text-momflow-lavender-dark' : 'text-momflow-text-light'}`}>
+            <i className="fa-solid fa-address-book"></i>
+            <span className="text-xs">Contactos</span>
           </button>
           <button onClick={() => setActiveScreen('wellbeing')} className={`flex flex-col items-center space-y-1 ${activeScreen === 'wellbeing' ? 'text-momflow-lavender-dark' : 'text-momflow-text-light'}`}>
             <i className="fa-solid fa-heart-pulse"></i>

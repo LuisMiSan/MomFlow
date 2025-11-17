@@ -381,7 +381,7 @@ interface CalendarScreenProps {
 
 const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, initialDate, onClearInitialDate, categoryConfigs }) => {
   const [currentDate, setCurrentDate] = useState(initialDate ? parseDateString(initialDate) : new Date());
-  const [view, setView] = useState<CalendarView>(initialDate ? 'day' : 'month');
+  const [view, setView] = useState<CalendarView>('day');
   const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>('all');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const timeoutIdsRef = useRef<Map<string, number>>(new Map());
