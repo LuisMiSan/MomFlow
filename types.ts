@@ -17,6 +17,7 @@ export interface Event {
   recurring?: string; // e.g., 'none', 'daily', 'weekly', 'monthly'
   source?: 'momflow' | 'google';
   subtasks?: Task[];
+  audio?: string; // base64 encoded audio data URL
 }
 
 export interface WellbeingData {

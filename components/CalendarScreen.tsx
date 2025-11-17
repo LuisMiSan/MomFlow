@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Event, Category, Task, CategoryConfig } from '../types';
 import { XMarkIcon, GoogleIcon, PlusIcon, ClockIcon } from './Icons';
@@ -236,7 +235,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
                         <XMarkIcon className="w-6 h-6"/>
                     </button>
                 </header>
-                <div className="p-4 space-y-4">
+                <div className="p-4 space-y-4 max-h-[80vh] overflow-y-auto">
                      {isGoogleEvent && (
                         <div className="bg-blue-50 text-blue-700 p-2 text-xs text-center rounded-lg">
                             Este evento está sincronizado con Google Calendar.
@@ -247,6 +246,13 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
                         {editedEvent.time && <p className="text-momflow-text-light">{editedEvent.time}</p>}
                     </div>
                     
+                    {editedEvent.audio && (
+                        <div>
+                            <h4 className="text-sm font-medium text-momflow-text-light mb-1">Recordatorio de Voz</h4>
+                            <audio controls src={editedEvent.audio} className="w-full h-10"></audio>
+                        </div>
+                    )}
+
                     <div>
                         <label htmlFor="category" className="block text-sm font-medium text-momflow-text-light mb-1">Categoría</label>
                         <select 

@@ -19,6 +19,15 @@ export const StopIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
+export const VoiceMemoIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6V7.5a6 6 0 0 0-12 0v5.25a6 6 0 0 0 6 6Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6.75v6.5" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m15 9.75 2.25-1.5" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="m15 9.75 2.25 1.5" />
+    </svg>
+);
+
 
 export const CameraIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>

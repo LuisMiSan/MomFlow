@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { sendMessageToGemini, parseTextToEvent, connectLiveAssistant, getEventFromImage, parseTextToTask } from '../services/geminiService';
-import { SendIcon, XMarkIcon, MicrophoneIcon, StopIcon, LoadingIcon } from './Icons';
+import { SendIcon, XMarkIcon, MicrophoneIcon, StopIcon, LoadingIcon, VoiceMemoIcon } from './Icons';
 import { LiveSession, LiveServerMessage } from '@google/genai';
 import { Event, Category } from '../types';
 
@@ -10,6 +9,7 @@ interface Message {
   text: string;
   isUser: boolean;
   isTranscription?: boolean;
+  audioUrl?: string;
 }
 
 interface AssistantChatProps {
@@ -62,6 +62,8 @@ const AssistantChat: React.FC<AssistantChatProps> = ({ onClose, initialImage, in
   const [isLoading, setIsLoading] = useState(false);
   const [isLive, setIsLive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isRecordingReminder, setIsRecordingReminder] = useState(false);
+  const [pendingVoiceReminder, setPendingVoiceReminder] = useState<string | null>(null);
 
   const sessionPromise = useRef<Promise<LiveSession> | null>(null);
   const mediaStream = useRef<MediaStream | null>(null);
@@ -73,6 +75,8 @@ const AssistantChat: React.FC<AssistantChatProps> = ({ onClose, initialImage, in
   const audioSources = useRef(new Set<AudioBufferSourceNode>());
   const currentInputTranscriptionRef = useRef('');
   const toolCalledThisTurn = useRef(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -126,6 +130,32 @@ const AssistantChat: React.FC<AssistantChatProps> = ({ onClose, initialImage, in
 
   const processUserInput = async (text: string) => {
     setIsLoading(true);
+
+    if (pendingVoiceReminder) {
+        const eventData = await parseTextToEvent(text);
+        if (eventData && eventData.date) {
+            onAddEvent({
+                title: 'Recordatorio de voz',
+                date: eventData.date,
+                time: eventData.time,
+                category: eventData.category || 'Personal',
+                audio: pendingVoiceReminder,
+            });
+            setMessages(prev => [...prev, {
+                text: `¡Hecho! He programado tu recordatorio de voz para el ${eventData.date}${eventData.time ? ` a las ${eventData.time}` : ''}.`,
+                isUser: false,
+            }]);
+            setPendingVoiceReminder(null);
+        } else {
+            setMessages(prev => [...prev, {
+                text: "No he entendido la fecha y hora. ¿Puedes intentarlo de nuevo? Por ejemplo: 'mañana a las 10am'.",
+                isUser: false,
+            }]);
+        }
+        setIsLoading(false);
+        return;
+    }
+
     const event = await parseTextToEvent(text);
     if(event && event.title && event.date && event.category) {
         onAddEvent(event);
@@ -163,6 +193,54 @@ const AssistantChat: React.FC<AssistantChatProps> = ({ onClose, initialImage, in
     setInput('');
     await processUserInput(textToProcess);
   };
+
+    const handleToggleReminderRecording = async () => {
+        if (isRecordingReminder) {
+            mediaRecorderRef.current?.stop();
+        } else {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorderRef.current = new MediaRecorder(stream);
+                audioChunksRef.current = [];
+
+                mediaRecorderRef.current.ondataavailable = event => {
+                    audioChunksRef.current.push(event.data);
+                };
+
+                mediaRecorderRef.current.onstop = () => {
+                    const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+
+                    const reader = new FileReader();
+                    reader.readAsDataURL(audioBlob);
+                    reader.onloadend = () => {
+                        const base64Audio = reader.result as string;
+                        setPendingVoiceReminder(base64Audio);
+
+                        setMessages(prev => [
+                            ...prev,
+                            { text: 'Recordatorio de voz grabado.', isUser: true, audioUrl },
+                            { text: '¡Genial! He guardado tu recordatorio. ¿Para qué fecha y hora lo programo?', isUser: false }
+                        ]);
+                    };
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                mediaRecorderRef.current.start();
+                setIsRecordingReminder(true);
+            } catch (error) {
+                console.error("Error accessing microphone for reminder:", error);
+                setMessages(prev => [...prev, { text: "No pude acceder al micrófono. Por favor, revisa los permisos.", isUser: false }]);
+            }
+        }
+    };
+    
+    useEffect(() => {
+        if (mediaRecorderRef.current?.state === 'recording' && !isRecordingReminder) {
+            mediaRecorderRef.current.stop();
+        }
+    }, [isRecordingReminder]);
+
 
   const handleLiveToggle = async () => {
     if (isLive) {
@@ -339,7 +417,14 @@ const AssistantChat: React.FC<AssistantChatProps> = ({ onClose, initialImage, in
         {messages.map((msg, index) => (
           <div key={index} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-xs md:max-w-md lg:max-w-lg px-4 py-2 rounded-2xl ${msg.isUser ? 'bg-momflow-lavender text-momflow-text-dark rounded-br-none' : 'bg-white text-momflow-text-dark rounded-bl-none'} ${msg.isTranscription && 'opacity-70 italic'}`}>
-              <p>{msg.text}</p>
+              {msg.audioUrl ? (
+                  <div className="space-y-2">
+                    <p className="font-semibold">{msg.text}</p>
+                    <audio controls src={msg.audioUrl} className="w-full h-10"></audio>
+                  </div>
+              ) : (
+                <p>{msg.text}</p>
+              )}
             </div>
           </div>
         ))}
@@ -358,10 +443,17 @@ const AssistantChat: React.FC<AssistantChatProps> = ({ onClose, initialImage, in
            <button 
              onClick={handleLiveToggle} 
              className={`p-3 rounded-full transition-colors ${isLive ? 'bg-red-500 text-white' : 'bg-momflow-lavender text-momflow-text-dark'}`}
-             disabled={isConnecting}
+             disabled={isConnecting || isLoading || isRecordingReminder}
            >
              {isConnecting ? <LoadingIcon className="w-6 h-6 animate-spin"/> : isLive ? <StopIcon className="w-6 h-6" /> : <MicrophoneIcon className="w-6 h-6" />}
            </button>
+           <button 
+                onClick={handleToggleReminderRecording}
+                className={`p-3 rounded-full transition-colors ${isRecordingReminder ? 'bg-red-500 text-white' : 'bg-momflow-lavender text-momflow-text-dark'}`}
+                disabled={isConnecting || isLoading || isLive}
+            >
+                {isRecordingReminder ? <StopIcon className="w-6 h-6" /> : <VoiceMemoIcon className="w-6 h-6" />}
+            </button>
            <input
             type="text"
             value={input}
@@ -369,9 +461,9 @@ const AssistantChat: React.FC<AssistantChatProps> = ({ onClose, initialImage, in
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Escribe un mensaje o usa el micro..."
             className="flex-1 w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-momflow-lavender-dark"
-            disabled={isLoading || isLive}
+            disabled={isLoading || isLive || isRecordingReminder}
           />
-          <button onClick={handleSend} disabled={isLoading || isLive || !input.trim()} className="bg-momflow-coral text-white p-3 rounded-full disabled:bg-gray-300">
+          <button onClick={handleSend} disabled={isLoading || isLive || isRecordingReminder || !input.trim()} className="bg-momflow-coral text-white p-3 rounded-full disabled:bg-gray-300">
             <SendIcon className="w-6 h-6" />
           </button>
         </div>
