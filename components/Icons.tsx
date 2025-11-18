@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 export const PlusIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -106,5 +107,36 @@ export const PhoneIcon: React.FC<{ className?: string }> = ({ className }) => (
 export const ShoppingBagIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.658-.463 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+    </svg>
+);
+
+export const MenuIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
+    </svg>
+);
+
+export const CalendarDaysIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25M3 18.75A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0H21" />
+    </svg>
+);
+
+export const UsersIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.125-2.324M15 19.128V12.5A2.5 2.5 0 0 1 17.5 10h.375c1.036 0 1.875.84 1.875 1.875v5.25M15 19.128c-2.671-.632-4.5-2.923-4.5-5.628v-3.873c0-1.036.84-1.875 1.875-1.875h.375c1.036 0 1.875.84 1.875 1.875v3.873M9 19.128a9.38 9.38 0 0 1-2.625.372A9.337 9.337 0 0 1 2.25 17.176M9 19.128V12.5A2.5 2.5 0 0 0 6.5 10h-.375C5.089 10 4.25 10.84 4.25 11.875v5.25M9 19.128c2.671-.632 4.5-2.923 4.5-5.628v-3.873c0-1.036-.84-1.875-1.875-1.875h-.375C9.089 8 8.25 8.84 8.25 9.875v3.873" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.375a3.375 3.375 0 1 0 0-6.75 3.375 3.375 0 0 0 0 6.75ZM12 21.75a3.375 3.375 0 1 0 0-6.75 3.375 3.375 0 0 0 0 6.75Z" />
+    </svg>
+);
+
+export const SparklesIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+    </svg>
+);
+
+export const Cog6ToothIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-1.003 1.11-1.226.554-.223 1.196-.223 1.75 0 .548.223 1.02.684 1.11 1.226M9.594 20.06c.09.542.56 1.003 1.11 1.226.554-.223 1.196-.223 1.75 0 .548.223 1.02.684 1.11 1.226M15.076 5.623c.338.256.623.572.857.924.234.35.39.75.465 1.164M9.376 18.377c-.338-.256-.623-.572-.857-.924-.234-.35-.39-.75-.465-1.164M20.06 9.594c.226 1.11.223 1.196 0 1.75-.223.548-.684 1.02-1.226 1.11M3.94 14.406c-.226-1.11-.223-1.196 0-1.75.223-.548.684-1.02 1.226-1.11M12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" />
     </svg>
 );

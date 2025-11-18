@@ -136,6 +136,33 @@ const addTaskFunctionDeclaration: FunctionDeclaration = {
     }
 };
 
+const addContactFunctionDeclaration: FunctionDeclaration = {
+    name: 'addContact',
+    description: 'Añade un contacto nuevo a la lista de contactos.',
+    parameters: {
+        type: Type.OBJECT,
+        properties: {
+            name: {
+                type: Type.STRING,
+                description: 'El nombre completo del contacto.'
+            },
+            relation: {
+                type: Type.STRING,
+                description: 'La relación con el contacto. Por ejemplo: "Pediatra", "Colegio", "Familia".'
+            },
+            phone: {
+                type: Type.STRING,
+                description: 'El número de teléfono del contacto.'
+            },
+            notes: {
+                type: Type.STRING,
+                description: 'Notas adicionales sobre el contacto (opcional).'
+            }
+        },
+        required: ['name', 'relation', 'phone']
+    }
+};
+
 
 // FIX: Updated callback types for better type safety and corrected responseModalities to use Modality.AUDIO enum.
 export const connectLiveAssistant = (callbacks: {
@@ -154,8 +181,8 @@ export const connectLiveAssistant = (callbacks: {
             speechConfig: {
                 voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } },
             },
-            tools: [{ functionDeclarations: [addTaskFunctionDeclaration] }],
-            systemInstruction: 'Eres un asistente amigable y empático para madres ocupadas llamado MomFlow. Responde en español de forma concisa y útil. Cuando el usuario te pida añadir una tarea, utiliza la función `addTask` que tienes disponible. No pidas confirmación antes de usar la función, simplemente úsala con la información que te den. Después de que la función se ejecute, confirma al usuario que la tarea ha sido añadida.',
+            tools: [{ functionDeclarations: [addTaskFunctionDeclaration, addContactFunctionDeclaration] }],
+            systemInstruction: 'Eres LINA, una asistente personal amigable, empática e increíblemente eficiente. Tu objetivo es ayudar al usuario a organizar su vida. Responde en español de forma concisa y útil. Cuando el usuario te pida añadir una tarea o un contacto, utiliza las funciones `addTask` o `addContact` que tienes disponibles. No pidas confirmación antes de usar la función, simplemente úsala con la información que te den. Después de que la función se ejecute, confirma al usuario que la acción se ha completado.',
         },
     });
 };

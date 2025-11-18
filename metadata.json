@@ -1,8 +1,7 @@
 {
-  "name": "MomFlow",
-  "description": "Asistente móvil inteligente para madres trabajadoras que combina agenda unificada, recordatorios multiformato e IA empática para reducir la carga mental y equilibrar trabajo, hogar y autocuidado.",
+  "name": "FamilyFlow",
+  "description": "FamilyFlow: Organiza tu vida familiar con LINA, tu asistente inteligente. Comparte calendarios, tareas y contactos de forma sencilla.",
   "requestFramePermissions": [
-    "camera",
     "microphone"
   ]
 }

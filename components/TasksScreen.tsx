@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Task, TaskList } from '../types';
-import { PlusIcon, MicrophoneIcon } from './Icons';
+import { PlusIcon } from './Icons';
 
 interface TasksScreenProps {
     taskLists: TaskList[];
@@ -154,18 +154,9 @@ const TasksScreen: React.FC<TasksScreenProps> = ({ taskLists, setTaskLists, onVo
 
     return (
         <div className="space-y-6">
-            <header className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-momflow-text-dark">Mis Tareas</h1>
-                    <p className="text-momflow-text-light">Organiza tus pendientes y libera tu mente.</p>
-                </div>
-                <button
-                    onClick={onVoiceAddTask}
-                    className="bg-momflow-lavender text-momflow-text-dark p-3 rounded-full shadow-md hover:bg-momflow-lavender-dark transition-colors"
-                    aria-label="Añadir tarea por voz"
-                >
-                    <MicrophoneIcon className="w-6 h-6" />
-                </button>
+            <header>
+                <h1 className="text-3xl font-bold text-momflow-text-dark">Mis Tareas</h1>
+                <p className="text-momflow-text-light">Organiza tus pendientes y libera tu mente.</p>
             </header>
 
             <div className="space-y-4">
@@ -192,7 +183,7 @@ const TasksScreen: React.FC<TasksScreenProps> = ({ taskLists, setTaskLists, onVo
                  {taskLists.length === 0 && (
                     <div className="text-center py-16">
                         <p className="text-lg text-momflow-text-light">No tienes ninguna lista de tareas.</p>
-                        <p className="text-sm text-gray-400 mt-2">Usa el botón '+' para crear una con el asistente.</p>
+                        <p className="text-sm text-gray-400 mt-2">Usa el asistente para crear tareas y listas.</p>
                     </div>
                 )}
             </div>
