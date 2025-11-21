@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { sendMessageToGemini, parseTextToEvent, connectLiveAssistant, parseTextToTask } from '../services/geminiService';
 import { 
@@ -278,7 +279,7 @@ const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, 
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-2 bg-gray-100 border-t border-gray-200">
+      <div className="p-2 bg-white border-t border-momflow-lavender">
         <div className="flex items-center space-x-2">
            <input
             type="text"
@@ -286,7 +287,7 @@ const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, 
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Escribe un mensaje..."
-            className="flex-1 w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-momflow-lavender-dark"
+            className="flex-1 w-full px-4 py-2 bg-momflow-cream border border-momflow-lavender rounded-full text-momflow-text-dark placeholder-momflow-text-light focus:outline-none focus:ring-2 focus:ring-momflow-lavender-dark"
             disabled={isLoading || isLive}
           />
            <button 
