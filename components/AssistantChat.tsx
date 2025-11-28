@@ -6,7 +6,7 @@ import {
     ClipboardListIcon, UsersIcon, SparklesIcon, ShoppingBagIcon, Cog6ToothIcon 
 } from './Icons';
 import { LiveSession, LiveServerMessage } from '@google/genai';
-import { Event, Contact } from '../types';
+import { Event, Contact, FamilyProfile } from '../types';
 
 interface Message {
   text: string;
@@ -22,6 +22,7 @@ interface LinaChatScreenProps {
   onAddEvent: (event: Omit<Event, 'id' | 'source' | 'reminder' | 'recurring'>) => void;
   onAddContact: (contact: Omit<Contact, 'id'>) => void;
   isGoogleCalendarConnected: boolean;
+  familyProfile: FamilyProfile;
 }
 
 // Audio utility functions
@@ -57,7 +58,7 @@ async function decodeAudioData(data: Uint8Array, ctx: AudioContext, sampleRate: 
     return buffer;
 }
 
-const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, onAddEvent, onAddContact, isGoogleCalendarConnected }) => {
+const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, onAddEvent, onAddContact, isGoogleCalendarConnected, familyProfile }) => {
   const [messages, setMessages] = useState<Message[]>([{ text: 'Hola, soy LINA. ¿En qué puedo ayudarte hoy?', isUser: false }]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -71,7 +72,6 @@ const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, 
   const outputAudioContext = useRef<AudioContext | null>(null);
   const nextStartTime = useRef(0);
   const audioSources = useRef(new Set<AudioBufferSourceNode>());
-  const currentInputTranscriptionRef = useRef('');
   const toolCalledThisTurn = useRef(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -242,65 +242,88 @@ const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, 
   ];
 
   return (
-    <div className="flex flex-col h-full bg-gray-100">
-      <header className="flex items-center justify-center p-3 bg-momflow-lavender-dark text-white shadow-md z-20">
-        <h1 className="text-xl font-bold">FamilyFlow</h1>
-      </header>
-
-      <nav className="grid grid-cols-6 gap-1 p-2 bg-white/80 backdrop-blur-sm border-b shadow-sm z-10">
-        {navItems.map(item => (
-          <button
-            key={item.screen}
-            onClick={() => onNavigate(item.screen)}
-            className="flex flex-col items-center justify-center p-1 rounded-lg hover:bg-momflow-lavender/50 focus:bg-momflow-lavender/50 focus:outline-none transition-colors space-y-1"
-            aria-label={item.label}
-          >
-            <item.icon className="w-6 h-6 text-momflow-text-light" />
-            <span className="text-[10px] font-semibold text-momflow-text-dark">{item.label}</span>
-          </button>
-        ))}
-      </nav>
-      
-      <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#ECE5DD]">
-        {messages.map((msg, index) => (
-          <div key={index} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-xs md:max-w-md lg:max-w-lg px-3 py-2 rounded-lg shadow-sm ${msg.isUser ? 'bg-[#DCF8C6] text-black rounded-br-none' : 'bg-white text-black rounded-bl-none'} ${msg.isTranscription ? 'opacity-70 italic' : ''}`}>
-              <p>{msg.text}</p>
-            </div>
-          </div>
-        ))}
-        {isLoading && (
-            <div className="flex justify-start">
-                 <div className="max-w-xs md:max-w-md lg:max-w-lg px-4 py-2 rounded-lg bg-white text-black rounded-bl-none">
-                    <LoadingIcon className="w-5 h-5 animate-spin" />
-                 </div>
-            </div>
-        )}
-        <div ref={messagesEndRef} />
+    <div className="flex flex-col h-screen bg-[#38a6e9] relative">
+      {/* Background Image Layer */}
+      <div className="absolute top-0 left-0 w-full h-1/2 z-0">
+         <img 
+            src={familyProfile.photoUrl} 
+            alt="Family" 
+            className="w-full h-full object-cover opacity-90" 
+         />
+         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#38a6e9]/20"></div>
       </div>
 
-      <div className="p-2 bg-white border-t border-momflow-lavender">
-        <div className="flex items-center space-x-2">
-           <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Escribe un mensaje..."
-            className="flex-1 w-full px-4 py-2 bg-momflow-cream border border-momflow-lavender rounded-full text-momflow-text-dark placeholder-momflow-text-light focus:outline-none focus:ring-2 focus:ring-momflow-lavender-dark"
-            disabled={isLoading || isLive}
-          />
-           <button 
-             onClick={handleLiveToggle} 
-             className={`p-3 rounded-full transition-colors ${isLive ? 'bg-red-500' : 'bg-momflow-coral'} text-white`}
-             disabled={isConnecting || isLoading}
-           >
-             {isConnecting ? <LoadingIcon className="w-6 h-6 animate-spin"/> : isLive ? <StopIcon className="w-6 h-6" /> : <MicrophoneIcon className="w-6 h-6" />}
-           </button>
-          <button onClick={handleSend} disabled={isLoading || isLive || !input.trim()} className="bg-momflow-coral text-white p-3 rounded-full disabled:bg-gray-300">
-            <SendIcon className="w-6 h-6" />
-          </button>
+      {/* Main Content Card - Curved Up */}
+      <div className="flex flex-col flex-1 z-10 mt-[35vh] bg-white rounded-t-[30px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] overflow-hidden">
+         
+         {/* Small handle indicator */}
+         <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3 mb-1"></div>
+
+         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
+            {messages.map((msg, index) => (
+            <div key={index} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] px-4 py-3 rounded-2xl shadow-sm ${
+                    msg.isUser 
+                    ? 'bg-[#38a6e9] text-white rounded-br-none' 
+                    : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                } ${msg.isTranscription ? 'opacity-70 italic' : ''}`}>
+                <p className="text-sm leading-relaxed">{msg.text}</p>
+                </div>
+            </div>
+            ))}
+            {isLoading && (
+                <div className="flex justify-start">
+                    <div className="px-4 py-3 rounded-2xl bg-gray-100 rounded-bl-none">
+                        <LoadingIcon className="w-5 h-5 animate-spin text-gray-500" />
+                    </div>
+                </div>
+            )}
+            <div ref={messagesEndRef} className="pb-20" /> {/* Extra padding for input area */}
         </div>
+
+        {/* Input Area */}
+        <div className="p-3 bg-white border-t border-gray-100">
+            <div className="flex items-center space-x-2 bg-gray-50 rounded-full p-1 border border-gray-200">
+                <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                    placeholder="Escribe un mensaje..."
+                    className="flex-1 px-4 py-2 bg-transparent text-gray-700 placeholder-gray-400 focus:outline-none"
+                    disabled={isLoading || isLive}
+                />
+                <button 
+                    onClick={handleLiveToggle} 
+                    className={`p-2 rounded-full transition-colors ${isLive ? 'bg-red-500 text-white animate-pulse' : 'text-gray-400 hover:text-[#38a6e9]'}`}
+                    disabled={isConnecting || isLoading}
+                >
+                    {isConnecting ? <LoadingIcon className="w-5 h-5 animate-spin"/> : isLive ? <StopIcon className="w-5 h-5" /> : <MicrophoneIcon className="w-5 h-5" />}
+                </button>
+                <button 
+                    onClick={handleSend} 
+                    disabled={isLoading || isLive || !input.trim()} 
+                    className="p-2 bg-[#38a6e9] text-white rounded-full hover:bg-blue-500 transition-colors shadow-sm disabled:bg-gray-300"
+                >
+                    <SendIcon className="w-4 h-4" />
+                </button>
+            </div>
+        </div>
+
+        {/* Bottom Navigation */}
+        <nav className="grid grid-cols-6 gap-1 p-2 bg-white border-t border-gray-100 pb-safe">
+            {navItems.map(item => (
+            <button
+                key={item.screen}
+                onClick={() => onNavigate(item.screen)}
+                className="flex flex-col items-center justify-center p-2 rounded-xl hover:bg-blue-50 focus:outline-none transition-colors group"
+                aria-label={item.label}
+            >
+                <item.icon className="w-6 h-6 text-gray-400 group-hover:text-[#38a6e9] transition-colors" />
+                <span className="text-[9px] font-medium text-gray-500 mt-1 group-hover:text-[#38a6e9]">{item.label}</span>
+            </button>
+            ))}
+        </nav>
       </div>
     </div>
   );

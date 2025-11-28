@@ -35,7 +35,7 @@ const initialTaskLists: TaskList[] = [
         completed: false,
         subtasks: [
             { id: 'st2-2-1', text: 'Decidir qué comprar', completed: true },
-            { id: 'st2-2-2', text: 'Ir a la tienda de juguetes', completed: false },
+            { id: 'st2-2-2', text: 'Ir a la tienda de juguetes', completed: true },
             { id: 'st2-2-3', text: 'Envolver el regalo', completed: false },
         ]
       },
@@ -296,6 +296,7 @@ const App: React.FC = () => {
         onAddEvent={handleAddEvent}
         onAddContact={handleAddContact}
         isGoogleCalendarConnected={isGoogleCalendarConnected}
+        familyProfile={familyProfile}
       />
       {renderModalScreen()}
     </div>
