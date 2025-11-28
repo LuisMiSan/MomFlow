@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Event, Category, Task, CategoryConfig } from '../types';
 import { XMarkIcon, GoogleIcon, PlusIcon, ClockIcon } from './Icons';
@@ -436,7 +437,13 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
 
         if (delay > 0) {
             const timeoutId = window.setTimeout(() => {
-                alert(`Recordatorio: ${event.title} a las ${event.time}`);
+                if ("Notification" in window && Notification.permission === "granted") {
+                    new Notification(`Recordatorio: ${event.title}`, {
+                        body: `Es hora de tu evento a las ${event.time}.`,
+                    });
+                } else {
+                    alert(`Recordatorio: ${event.title} a las ${event.time}`);
+                }
                 timeoutIdsRef.current.delete(event.id);
             }, delay);
             timeoutIdsRef.current.set(event.id, timeoutId);
@@ -458,6 +465,10 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
 
     // Schedule reminders on initial load and manage cleanup
     useEffect(() => {
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+
         events.forEach(scheduleReminder);
         return () => {
             timeoutIdsRef.current.forEach(timeoutId => clearTimeout(timeoutId));
@@ -640,26 +651,51 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
     const isToday = currentDate.toDateString() === today.toDateString();
     const dayEvents = filteredEvents.filter(e => e.date === dateString).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
+    const selectedCategoryName = selectedCategory === 'all' ? 'Todas' : selectedCategory;
+    const selectedCategoryColor = selectedCategory === 'all' 
+        ? '#3D345C' 
+        : categoryConfigs.find(c => c.name === selectedCategory)?.color || '#3D345C';
+
     return (
-        <div className={`p-4 rounded-lg space-y-4 ${isToday ? 'bg-momflow-lavender/40' : 'bg-white/70'}`}>
-             <h3 className="font-bold text-xl text-momflow-text-dark mb-2">
-                Eventos del día
-            </h3>
+        <div className={`p-4 rounded-lg space-y-4 ${isToday ? 'bg-momflow-lavender/40' : 'bg-white/70'} min-h-[300px]`}>
+             <div className="flex items-center justify-between mb-2">
+                 <h3 className="font-bold text-xl text-momflow-text-dark">
+                    Eventos del día
+                </h3>
+                {selectedCategory !== 'all' && (
+                    <span 
+                        className="px-2 py-1 rounded-full text-xs font-bold border"
+                        style={{ 
+                            backgroundColor: `${selectedCategoryColor}20`, 
+                            color: selectedCategoryColor,
+                            borderColor: `${selectedCategoryColor}40`
+                        }}
+                    >
+                        {selectedCategoryName}
+                    </span>
+                )}
+             </div>
+
             {dayEvents.length > 0 ? (
                 <div className="space-y-2">
                     {dayEvents.map(event => <EventPill key={event.id} event={event} onClick={() => setSelectedEvent(event)} color={categoryColorMap[event.category] || '#d1d5db'} />)}
                 </div>
             ) : (
-                <p className="text-center text-momflow-text-light py-8">No hay eventos para este día.</p>
+                <div className="text-center py-10 flex flex-col items-center justify-center text-momflow-text-light opacity-70">
+                    <i className="fa-regular fa-calendar-xmark text-3xl mb-2"></i>
+                    <p>No hay eventos {selectedCategory !== 'all' ? `de ${selectedCategory}` : ''} para este día.</p>
+                </div>
             )}
         </div>
     );
   };
 
   return (
-    <div className="h-full flex flex-col">
-      {renderHeader()}
-      {renderFilterBar()}
+    <div className="h-full flex flex-col relative">
+      <div className="sticky top-0 bg-momflow-cream z-20 pb-2">
+        {renderHeader()}
+        {renderFilterBar()}
+      </div>
       <div className="flex-grow">
         {view === 'month' && renderMonthView()}
         {view === 'week' && renderWeekView()}

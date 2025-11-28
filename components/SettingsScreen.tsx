@@ -1,88 +1,16 @@
+
 import React, { useState } from 'react';
-import { WhatsAppIcon, GoogleIcon, XMarkIcon, PencilSquareIcon, TrashIcon, PlusIcon } from './Icons';
-import { CategoryConfig, Event } from '../types';
+import { WhatsAppIcon, GoogleIcon, XMarkIcon, PencilSquareIcon, TrashIcon, PlusIcon, CameraIcon } from './Icons';
+import { CategoryConfig, Event, FamilyProfile, FamilyMember } from '../types';
 
 const PRESET_COLORS = [
-    '#82ca9d', '#8884d8', '#ffc658', '#ff8042', '#d1d5db',
-    '#ff7373', '#a2d2ff', '#bdea8c', '#ffb5a7', '#fec89a'
+    '#ff8042', // Orange
+    '#ffc658', // Yellow
+    '#82ca9d', // Green
+    '#8884d8', // Purple
+    '#ff7373', // Red
+    '#a2d2ff', // Light Blue
 ];
-
-interface CategoryModalProps {
-    category: CategoryConfig | null;
-    onClose: () => void;
-    onSave: (category: CategoryConfig) => void;
-    existingNames: string[];
-}
-
-const CategoryModal: React.FC<CategoryModalProps> = ({ category, onClose, onSave, existingNames }) => {
-    const [name, setName] = useState(category?.name || '');
-    const [color, setColor] = useState(category?.color || PRESET_COLORS[0]);
-    const [error, setError] = useState('');
-    const isEditing = !!category;
-
-    const handleSave = () => {
-        const trimmedName = name.trim();
-        if (!trimmedName) {
-            setError('El nombre no puede estar vacío.');
-            return;
-        }
-        const isDuplicate = existingNames.some(
-            existingName => existingName.toLowerCase() === trimmedName.toLowerCase() && (isEditing ? category.name.toLowerCase() !== trimmedName.toLowerCase() : true)
-        );
-        if (isDuplicate) {
-            setError('Ya existe una categoría con este nombre.');
-            return;
-        }
-
-        onSave({
-            id: category?.id || `cat-${Date.now()}`,
-            name: trimmedName,
-            color,
-            deletable: category?.deletable ?? true,
-        });
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
-                <header className="p-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-momflow-text-dark">{isEditing ? 'Editar Categoría' : 'Añadir Categoría'}</h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
-                        <XMarkIcon className="w-6 h-6"/>
-                    </button>
-                </header>
-                <div className="p-4 space-y-4">
-                    <div>
-                        <label htmlFor="cat-name" className="block text-sm font-medium text-momflow-text-light mb-1">Nombre</label>
-                        <input
-                            id="cat-name"
-                            type="text"
-                            value={name}
-                            onChange={(e) => {
-                                setName(e.target.value);
-                                if (error) setError('');
-                            }}
-                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-momflow-lavender-dark focus:border-momflow-lavender-dark"
-                        />
-                    </div>
-                     <div>
-                        <label className="block text-sm font-medium text-momflow-text-light mb-1">Color</label>
-                        <div className="grid grid-cols-5 gap-2">
-                            {PRESET_COLORS.map(c => (
-                                <button key={c} onClick={() => setColor(c)} className={`w-10 h-10 rounded-full transition-transform transform hover:scale-110 ${color === c ? 'ring-2 ring-offset-2 ring-momflow-lavender-dark' : ''}`} style={{ backgroundColor: c }} />
-                            ))}
-                        </div>
-                    </div>
-                    {error && <p className="text-sm text-red-600">{error}</p>}
-                </div>
-                <footer className="p-4 bg-gray-50 flex justify-end space-x-2">
-                    <button onClick={onClose} className="px-4 py-2 bg-gray-200 text-momflow-text-dark font-semibold rounded-lg hover:bg-gray-300">Cancelar</button>
-                    <button onClick={handleSave} className="px-4 py-2 bg-momflow-coral text-white font-semibold rounded-lg hover:bg-red-400">Guardar</button>
-                </footer>
-            </div>
-        </div>
-    );
-};
 
 interface SettingsScreenProps {
   isWhatsAppConnected: boolean;
@@ -92,6 +20,8 @@ interface SettingsScreenProps {
   categoryConfigs: CategoryConfig[];
   setCategoryConfigs: React.Dispatch<React.SetStateAction<CategoryConfig[]>>;
   setEvents: React.Dispatch<React.SetStateAction<Event[]>>;
+  familyProfile: FamilyProfile;
+  setFamilyProfile: React.Dispatch<React.SetStateAction<FamilyProfile>>;
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ 
@@ -102,136 +32,170 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
   categoryConfigs,
   setCategoryConfigs,
   setEvents,
+  familyProfile,
+  setFamilyProfile
 }) => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingCategory, setEditingCategory] = useState<CategoryConfig | null>(null);
-
-    const handleOpenModal = (category: CategoryConfig | null = null) => {
-        setEditingCategory(category);
-        setIsModalOpen(true);
+    
+    const handleNameChange = (val: string) => {
+        setFamilyProfile(prev => ({ ...prev, name: val }));
     };
 
-    const handleSaveCategory = (newConfig: CategoryConfig) => {
-        const oldName = editingCategory?.name;
-        
-        if (editingCategory) { // Editing existing
-            setCategoryConfigs(prev => prev.map(c => c.id === newConfig.id ? newConfig : c));
-             // Update events if name changed
-            if (oldName && oldName !== newConfig.name) {
-                setEvents(prevEvents => prevEvents.map(event => 
-                event.category === oldName ? { ...event, category: newConfig.name } : event
-                ));
-            }
-        } else { // Adding new
-            setCategoryConfigs(prev => [...prev, newConfig]);
-        }
-        setIsModalOpen(false);
-        setEditingCategory(null);
+    const handleMemberChange = (id: string, field: keyof FamilyMember, value: string) => {
+        setFamilyProfile(prev => ({
+            ...prev,
+            members: prev.members.map(m => m.id === id ? { ...m, [field]: value } : m)
+        }));
     };
 
-    const handleDeleteCategory = (configToDelete: CategoryConfig) => {
-        if (!configToDelete.deletable) return;
-        if (window.confirm(`¿Estás segura de que quieres eliminar la categoría "${configToDelete.name}"? Los eventos existentes se moverán a "Otro".`)) {
-            setCategoryConfigs(prev => prev.filter(c => c.id !== configToDelete.id));
-            // Re-assign events to 'Otro'
-            const otherCategory = categoryConfigs.find(c => c.name === 'Otro') || categoryConfigs[0];
-            setEvents(prevEvents => prevEvents.map(event =>
-                event.category === configToDelete.name ? { ...event, category: otherCategory.name } : event
-            ));
+    const handleTimezoneChange = (val: string) => {
+        setFamilyProfile(prev => ({ ...prev, timezone: val }));
+    };
+
+    const addMember = () => {
+        const newMember: FamilyMember = {
+            id: `m-${Date.now()}`,
+            name: '',
+            color: PRESET_COLORS[familyProfile.members.length % PRESET_COLORS.length]
+        };
+        setFamilyProfile(prev => ({ ...prev, members: [...prev.members, newMember] }));
+    };
+
+    const removeMember = (id: string) => {
+        if(window.confirm('¿Eliminar este miembro?')) {
+            setFamilyProfile(prev => ({ ...prev, members: prev.members.filter(m => m.id !== id) }));
         }
     };
 
   return (
-    <>
-    <div className="space-y-6">
-       <header>
-        <h1 className="text-3xl font-bold text-momflow-text-dark">Ajustes</h1>
-        <p className="text-momflow-text-light">Gestiona tus integraciones y preferencias.</p>
-      </header>
-
-      <section className="bg-white p-4 rounded-xl shadow-md">
-        <h2 className="text-xl font-semibold mb-4 text-momflow-text-dark">Integraciones</h2>
-        
-        <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50">
-          <div className="flex items-center space-x-4">
-            <WhatsAppIcon className="w-8 h-8 text-green-500" />
-            <div>
-              <p className="font-semibold text-momflow-text-dark">WhatsApp</p>
-              <p className="text-sm text-momflow-text-light">Reenvía mensajes para crear eventos.</p>
-            </div>
-          </div>
-          <button 
-            onClick={onToggleWhatsApp}
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-              isWhatsAppConnected 
-              ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-              : 'bg-momflow-lavender text-momflow-text-dark hover:bg-momflow-lavender-dark'
-            }`}
-          >
-            {isWhatsAppConnected ? 'Desconectar' : 'Conectar'}
-          </button>
-        </div>
-
-         <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 mt-2">
-          <div className="flex items-center space-x-4">
-            <GoogleIcon className="w-8 h-8 text-blue-500" />
-            <div>
-              <p className="font-semibold text-momflow-text-dark">Google Calendar</p>
-              <p className="text-sm text-momflow-text-light">Sincroniza eventos y recordatorios.</p>
-            </div>
-          </div>
-          <button 
-            onClick={onToggleGoogleCalendar}
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-              isGoogleCalendarConnected
-              ? 'bg-red-100 text-red-700 hover:bg-red-200'
-              : 'bg-momflow-lavender text-momflow-text-dark hover:bg-momflow-lavender-dark'
-            }`}
-            >
-            {isGoogleCalendarConnected ? 'Desconectar' : 'Conectar'}
-          </button>
-        </div>
-      </section>
-
-      <section className="bg-white p-4 rounded-xl shadow-md">
-         <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-momflow-text-dark">Gestionar Categorías</h2>
-            <button onClick={() => handleOpenModal()} className="flex items-center space-x-1 text-sm bg-momflow-lavender text-momflow-text-dark font-semibold px-3 py-1.5 rounded-full hover:bg-momflow-lavender-dark">
-                <PlusIcon className="w-4 h-4" />
-                <span>Añadir</span>
-            </button>
-         </div>
-         <div className="space-y-2">
-            {categoryConfigs.map(cat => (
-                <div key={cat.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center space-x-3">
-                        <div className="w-5 h-5 rounded-full" style={{ backgroundColor: cat.color }}></div>
-                        <span className="text-momflow-text-dark font-medium">{cat.name}</span>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                        <button onClick={() => handleOpenModal(cat)} className="text-momflow-text-light hover:text-momflow-lavender-dark">
-                            <PencilSquareIcon className="w-5 h-5" />
-                        </button>
-                        {cat.deletable && (
-                             <button onClick={() => handleDeleteCategory(cat)} className="text-momflow-text-light hover:text-red-500">
-                                <TrashIcon className="w-5 h-5" />
-                             </button>
-                        )}
-                    </div>
-                </div>
-            ))}
-         </div>
-      </section>
-    </div>
-    {isModalOpen && (
-        <CategoryModal
-            category={editingCategory}
-            onClose={() => setIsModalOpen(false)}
-            onSave={handleSaveCategory}
-            existingNames={categoryConfigs.map(c => c.name)}
+    <div className="bg-white min-h-full pb-10">
+      {/* Hero Image Section */}
+      <div className="relative w-full h-64 bg-gray-300">
+        <img 
+            src={familyProfile.photoUrl} 
+            alt="Family" 
+            className="w-full h-full object-cover"
         />
-    )}
-    </>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+        {/* Placeholder for changing image functionality */}
+        <button className="absolute bottom-4 right-4 bg-white/30 backdrop-blur-md p-2 rounded-full hover:bg-white/50 transition-colors">
+            <CameraIcon className="w-6 h-6 text-white" />
+        </button>
+      </div>
+
+      <div className="px-6 -mt-8 relative z-10 space-y-8">
+          
+          {/* Family Name Card */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
+              <input 
+                type="text" 
+                value={familyProfile.name}
+                onChange={(e) => handleNameChange(e.target.value)}
+                className="text-3xl font-bold text-momflow-text-dark text-center w-full focus:outline-none border-b-2 border-transparent focus:border-momflow-lavender-dark transition-colors bg-transparent placeholder-gray-300"
+                placeholder="Nombre de la Familia"
+              />
+              <p className="text-gray-400 text-sm mt-1 uppercase tracking-wide font-medium">Family Name</p>
+          </div>
+
+          {/* Member Settings */}
+          <div>
+            <h3 className="text-lg font-semibold text-momflow-text-dark mb-3 px-1">Member Settings</h3>
+            <div className="space-y-3">
+                {familyProfile.members.map(member => (
+                    <div key={member.id} className="flex items-center space-x-3 group">
+                        <div className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-center shadow-sm focus-within:ring-2 focus-within:ring-momflow-lavender">
+                            {/* Color Dot Picker */}
+                            <div className="dropdown relative group/color cursor-pointer mr-3">
+                                <div className="w-4 h-4 rounded-full shadow-sm ring-2 ring-white" style={{ backgroundColor: member.color }}></div>
+                                {/* Simple hover color picker for demo */}
+                                <div className="absolute top-6 left-0 bg-white shadow-xl rounded-lg p-2 flex gap-1 z-50 hidden group-hover/color:flex">
+                                    {PRESET_COLORS.map(c => (
+                                        <button 
+                                            key={c} 
+                                            onClick={() => handleMemberChange(member.id, 'color', c)}
+                                            className="w-4 h-4 rounded-full hover:scale-110 transition-transform"
+                                            style={{ backgroundColor: c }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            <input 
+                                type="text" 
+                                value={member.name}
+                                onChange={(e) => handleMemberChange(member.id, 'name', e.target.value)}
+                                className="flex-1 bg-transparent focus:outline-none text-momflow-text-dark font-medium placeholder-gray-300"
+                                placeholder="Nombre del miembro"
+                            />
+                        </div>
+                        <button onClick={() => removeMember(member.id)} className="text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <TrashIcon className="w-5 h-5" />
+                        </button>
+                    </div>
+                ))}
+                 <button 
+                    onClick={addMember}
+                    className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-400 hover:border-momflow-lavender hover:text-momflow-lavender transition-colors flex items-center justify-center space-x-2 font-medium"
+                >
+                    <PlusIcon className="w-5 h-5" />
+                    <span>Añadir Miembro</span>
+                </button>
+            </div>
+          </div>
+
+          {/* Timezone Setting */}
+           <div>
+             <h3 className="text-lg font-semibold text-momflow-text-dark mb-3 px-1">Regional</h3>
+             <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-sm flex items-center justify-between">
+                <select 
+                    value={familyProfile.timezone}
+                    onChange={(e) => handleTimezoneChange(e.target.value)}
+                    className="w-full bg-transparent focus:outline-none text-momflow-text-dark font-medium appearance-none"
+                >
+                    <option value="GMT-7 America/Los_Angeles">GMT-7 America/Los_Angeles</option>
+                    <option value="GMT-5 America/New_York">GMT-5 America/New_York</option>
+                    <option value="GMT+1 Europe/Madrid">GMT+1 Europe/Madrid</option>
+                    <option value="GMT+0 Europe/London">GMT+0 Europe/London</option>
+                </select>
+                <div className="w-3 h-3 rounded-full bg-blue-400 ml-2"></div>
+             </div>
+          </div>
+
+           {/* System Integrations (Preserving old functionality in new style) */}
+           <div className="pt-6 border-t border-gray-100">
+             <h3 className="text-lg font-semibold text-momflow-text-dark mb-3 px-1">Integraciones</h3>
+             <div className="space-y-3">
+                 {/* WhatsApp */}
+                 <div className="bg-white border border-gray-200 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center space-x-3">
+                         <WhatsAppIcon className="w-6 h-6 text-green-500" />
+                         <span className="font-medium text-momflow-text-dark">WhatsApp</span>
+                    </div>
+                     <button 
+                        onClick={onToggleWhatsApp}
+                        className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none ${isWhatsAppConnected ? 'bg-green-500' : 'bg-gray-200'}`}
+                    >
+                        <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ${isWhatsAppConnected ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                    </button>
+                 </div>
+                 
+                 {/* Google */}
+                 <div className="bg-white border border-gray-200 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center space-x-3">
+                         <GoogleIcon className="w-6 h-6 text-blue-500" />
+                         <span className="font-medium text-momflow-text-dark">Google Calendar</span>
+                    </div>
+                     <button 
+                        onClick={onToggleGoogleCalendar}
+                        className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 focus:outline-none ${isGoogleCalendarConnected ? 'bg-blue-500' : 'bg-gray-200'}`}
+                    >
+                        <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform duration-300 ${isGoogleCalendarConnected ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                    </button>
+                 </div>
+             </div>
+           </div>
+
+      </div>
+    </div>
   );
 };
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import LinaChatScreen from './components/AssistantChat';
 import { XMarkIcon } from './components/Icons';
@@ -7,7 +8,7 @@ import SettingsScreen from './components/SettingsScreen';
 import TasksScreen from './components/TasksScreen';
 import ContactsScreen from './components/ContactsScreen';
 import ShoppingScreen from './components/ShoppingScreen';
-import { TaskList, Event, Category, CategoryConfig, Contact } from './types';
+import { TaskList, Event, Category, CategoryConfig, Contact, FamilyProfile } from './types';
 
 type Screen = 'calendar' | 'tasks' | 'wellbeing' | 'contacts' | 'shopping' | 'settings';
 
@@ -55,6 +56,17 @@ const DEFAULT_CATEGORY_CONFIGS: CategoryConfig[] = [
     { id: 'cat-5', name: 'Otro', color: '#d1d5db', deletable: false },
 ];
 
+const initialFamilyProfile: FamilyProfile = {
+    name: 'The Keller Crew 💕',
+    photoUrl: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?q=80&w=2070&auto=format&fit=crop',
+    timezone: 'GMT-7 America/Los_Angeles',
+    members: [
+        { id: 'm1', name: 'Kevin', color: '#ff8042' }, 
+        { id: 'm2', name: 'Jason', color: '#ffc658' },
+        { id: 'm3', name: 'Sarah', color: '#8884d8' } 
+    ]
+};
+
 const createMockEvents = (source: 'momflow' | 'google'): Event[] => {
     const today = new Date();
     
@@ -89,6 +101,15 @@ const App: React.FC = () => {
   const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState(false);
   const [taskLists, setTaskLists] = useState<TaskList[]>(initialTaskLists);
   const [momFlowEvents, setMomFlowEvents] = useState<Event[]>(initialMomFlowEvents);
+  
+  const [familyProfile, setFamilyProfile] = useState<FamilyProfile>(() => {
+      try {
+          const storedProfile = localStorage.getItem('familyflow-profile');
+          return storedProfile ? JSON.parse(storedProfile) : initialFamilyProfile;
+      } catch {
+          return initialFamilyProfile;
+      }
+  });
 
   const [contacts, setContacts] = useState<Contact[]>(() => {
     try {
@@ -130,6 +151,10 @@ const App: React.FC = () => {
       console.error("Error saving contacts to localStorage:", error);
     }
   }, [contacts]);
+  
+  useEffect(() => {
+      localStorage.setItem('familyflow-profile', JSON.stringify(familyProfile));
+  }, [familyProfile]);
 
   const handleAddTask = ({ text, list }: { text: string; list: string }) => {
     setTaskLists(prevLists => {
@@ -217,6 +242,8 @@ const App: React.FC = () => {
                             categoryConfigs={categoryConfigs}
                             setCategoryConfigs={setCategoryConfigs}
                             setEvents={setMomFlowEvents}
+                            familyProfile={familyProfile}
+                            setFamilyProfile={setFamilyProfile}
                          />;
         break;
       case 'shopping':
@@ -230,7 +257,7 @@ const App: React.FC = () => {
     }
 
     return (
-        <div className="absolute inset-0 bg-momflow-cream z-50 flex flex-col animate-slide-in-up">
+        <div className="absolute inset-0 bg-momflow-cream z-50 flex flex-col animate-slide-in-up overflow-hidden">
             <style>{`
                 @keyframes slide-in-up {
                     from { transform: translateY(100%); }
@@ -238,13 +265,23 @@ const App: React.FC = () => {
                 }
                 .animate-slide-in-up { animation: slide-in-up 0.3s ease-out forwards; }
             `}</style>
-            <header className="flex items-center justify-between p-2 bg-white/80 backdrop-blur-sm border-b sticky top-0 z-10">
-                <h2 className="text-xl font-bold text-momflow-text-dark capitalize ml-2">{modalScreen === 'wellbeing' ? 'Bienestar' : modalScreen}</h2>
-                <button onClick={() => setModalScreen(null)} className="text-gray-500 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100">
+             {/* Custom header logic: Don't show standard header for Settings to allow hero image */}
+            {modalScreen !== 'settings' && (
+                <header className="flex items-center justify-between p-2 bg-white/80 backdrop-blur-sm border-b sticky top-0 z-10">
+                    <h2 className="text-xl font-bold text-momflow-text-dark capitalize ml-2">{modalScreen === 'wellbeing' ? 'Bienestar' : modalScreen}</h2>
+                    <button onClick={() => setModalScreen(null)} className="text-gray-500 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100">
+                        <XMarkIcon className="w-6 h-6" />
+                    </button>
+                </header>
+            )}
+             {/* Close button overlay for settings */}
+             {modalScreen === 'settings' && (
+                 <button onClick={() => setModalScreen(null)} className="absolute top-4 right-4 z-20 bg-white/50 backdrop-blur-md p-2 rounded-full text-white hover:bg-white/80 transition-all shadow-lg hover:text-gray-800">
                     <XMarkIcon className="w-6 h-6" />
                 </button>
-            </header>
-            <main className="flex-grow p-4 overflow-y-auto">
+            )}
+
+            <main className={`flex-grow overflow-y-auto ${modalScreen === 'settings' ? 'p-0' : 'p-4'}`}>
                 {screenComponent}
             </main>
         </div>

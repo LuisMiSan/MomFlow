@@ -1,3 +1,4 @@
+
 export type Category = string;
 
 export interface CategoryConfig {
@@ -5,6 +6,19 @@ export interface CategoryConfig {
   name: Category;
   color: string;
   deletable: boolean;
+}
+
+export interface FamilyMember {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface FamilyProfile {
+  name: string;
+  photoUrl: string;
+  timezone: string;
+  members: FamilyMember[];
 }
 
 export interface Event {
