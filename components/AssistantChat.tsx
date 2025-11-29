@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { sendMessageToGemini, parseTextToEvent, connectLiveAssistant, parseTextToTask } from '../services/geminiService';
 import { 
     SendIcon, MicrophoneIcon, StopIcon, LoadingIcon, CalendarDaysIcon, 
-    ClipboardListIcon, UsersIcon, SparklesIcon, ShoppingBagIcon, Cog6ToothIcon 
+    ClipboardListIcon, UsersIcon, SparklesIcon, ShoppingBagIcon, Cog6ToothIcon, CakeIcon 
 } from './Icons';
 import { LiveSession, LiveServerMessage } from '@google/genai';
 import { Event, Contact, FamilyProfile } from '../types';
@@ -14,7 +14,7 @@ interface Message {
   isTranscription?: boolean;
 }
 
-type Screen = 'calendar' | 'tasks' | 'wellbeing' | 'contacts' | 'shopping' | 'settings';
+type Screen = 'calendar' | 'tasks' | 'wellbeing' | 'contacts' | 'shopping' | 'settings' | 'meals';
 
 interface LinaChatScreenProps {
   onNavigate: (screen: Screen) => void;
@@ -235,6 +235,7 @@ const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, 
   const navItems = [
     { label: 'Calendario', screen: 'calendar' as Screen, icon: CalendarDaysIcon },
     { label: 'Tareas', screen: 'tasks' as Screen, icon: ClipboardListIcon },
+    { label: 'Comidas', screen: 'meals' as Screen, icon: CakeIcon },
     { label: 'Contactos', screen: 'contacts' as Screen, icon: UsersIcon },
     { label: 'Bienestar', screen: 'wellbeing' as Screen, icon: SparklesIcon },
     { label: 'Compras', screen: 'shopping' as Screen, icon: ShoppingBagIcon },
@@ -311,7 +312,7 @@ const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, 
         </div>
 
         {/* Bottom Navigation */}
-        <nav className="grid grid-cols-6 gap-1 p-2 bg-white border-t border-gray-100 pb-safe">
+        <nav className="grid grid-cols-7 gap-1 p-2 bg-white border-t border-gray-100 pb-safe">
             {navItems.map(item => (
             <button
                 key={item.screen}
@@ -319,8 +320,8 @@ const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, 
                 className="flex flex-col items-center justify-center p-2 rounded-xl hover:bg-blue-50 focus:outline-none transition-colors group"
                 aria-label={item.label}
             >
-                <item.icon className="w-6 h-6 text-gray-400 group-hover:text-[#38a6e9] transition-colors" />
-                <span className="text-[9px] font-medium text-gray-500 mt-1 group-hover:text-[#38a6e9]">{item.label}</span>
+                <item.icon className="w-5 h-5 text-gray-400 group-hover:text-[#38a6e9] transition-colors" />
+                <span className="text-[8px] font-medium text-gray-500 mt-1 group-hover:text-[#38a6e9] truncate w-full text-center">{item.label}</span>
             </button>
             ))}
         </nav>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { Category, WellbeingData, CategoryConfig } from '../types';
@@ -68,8 +69,9 @@ const WellbeingScreen: React.FC<WellbeingScreenProps> = ({ categoryConfigs }) =>
       {/* Weekly Balance Chart */}
       <section className="bg-white p-4 rounded-xl shadow-md">
         <h2 className="text-xl font-semibold mb-3 text-momflow-text-dark text-center">Balance Semanal</h2>
-        <div className="w-full h-64">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+        {/* Fix: Added relative positioning and min-w-0 to ensure Recharts calculates dimensions correctly inside flex containers */}
+        <div className="w-full h-64 relative min-w-0">
+          <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={wellbeingData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} fill="#8884d8" paddingAngle={5}>
                 {wellbeingData.map((entry, index) => (

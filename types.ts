@@ -60,3 +60,23 @@ export interface Contact {
   phone: string;
   notes?: string;
 }
+
+// New types for Meal Planner
+export interface Recipe {
+    id: string;
+    title: string;
+    image: string;
+    source: string;
+    url: string;
+    prepTime?: string;
+    tags?: string[];
+}
+
+export type MealType = 'breakfast' | 'lunch' | 'dinner';
+
+export interface MealPlan {
+    id: string;
+    date: string; // YYYY-MM-DD
+    type: MealType;
+    recipeId: string;
+}

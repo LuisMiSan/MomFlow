@@ -8,9 +8,10 @@ import SettingsScreen from './components/SettingsScreen';
 import TasksScreen from './components/TasksScreen';
 import ContactsScreen from './components/ContactsScreen';
 import ShoppingScreen from './components/ShoppingScreen';
+import MealPlannerScreen from './components/MealPlannerScreen';
 import { TaskList, Event, Category, CategoryConfig, Contact, FamilyProfile } from './types';
 
-type Screen = 'calendar' | 'tasks' | 'wellbeing' | 'contacts' | 'shopping' | 'settings';
+type Screen = 'calendar' | 'tasks' | 'wellbeing' | 'contacts' | 'shopping' | 'settings' | 'meals';
 
 const initialTaskLists: TaskList[] = [
   {
@@ -252,6 +253,9 @@ const App: React.FC = () => {
       case 'wellbeing':
           screenComponent = <WellbeingScreen categoryConfigs={categoryConfigs} />;
           break;
+      case 'meals':
+          screenComponent = <MealPlannerScreen />;
+          break;
       default:
         return null;
     }
@@ -265,8 +269,8 @@ const App: React.FC = () => {
                 }
                 .animate-slide-in-up { animation: slide-in-up 0.3s ease-out forwards; }
             `}</style>
-             {/* Custom header logic: Don't show standard header for Settings to allow hero image */}
-            {modalScreen !== 'settings' && (
+             {/* Custom header logic: Don't show standard header for Settings or Meals (which has its own hero) */}
+            {modalScreen !== 'settings' && modalScreen !== 'meals' && (
                 <header className="flex items-center justify-between p-2 bg-white/80 backdrop-blur-sm border-b sticky top-0 z-10">
                     <h2 className="text-xl font-bold text-momflow-text-dark capitalize ml-2">{modalScreen === 'wellbeing' ? 'Bienestar' : modalScreen}</h2>
                     <button onClick={() => setModalScreen(null)} className="text-gray-500 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100">
@@ -274,14 +278,14 @@ const App: React.FC = () => {
                     </button>
                 </header>
             )}
-             {/* Close button overlay for settings */}
-             {modalScreen === 'settings' && (
+             {/* Close button overlay for settings and meals */}
+             {(modalScreen === 'settings' || modalScreen === 'meals') && (
                  <button onClick={() => setModalScreen(null)} className="absolute top-4 right-4 z-20 bg-white/50 backdrop-blur-md p-2 rounded-full text-white hover:bg-white/80 transition-all shadow-lg hover:text-gray-800">
                     <XMarkIcon className="w-6 h-6" />
                 </button>
             )}
 
-            <main className={`flex-grow overflow-y-auto ${modalScreen === 'settings' ? 'p-0' : 'p-4'}`}>
+            <main className={`flex-grow overflow-y-auto ${modalScreen === 'settings' || modalScreen === 'meals' ? 'p-0' : 'p-4'}`}>
                 {screenComponent}
             </main>
         </div>
