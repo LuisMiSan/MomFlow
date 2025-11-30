@@ -251,7 +251,7 @@ const App: React.FC = () => {
           screenComponent = <ShoppingScreen />;
           break;
       case 'wellbeing':
-          screenComponent = <WellbeingScreen categoryConfigs={categoryConfigs} />;
+          screenComponent = <WellbeingScreen categoryConfigs={categoryConfigs} events={displayedEvents} />;
           break;
       case 'meals':
           screenComponent = <MealPlannerScreen />;

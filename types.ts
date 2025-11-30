@@ -1,4 +1,3 @@
-
 export type Category = string;
 
 export interface CategoryConfig {
@@ -37,6 +36,7 @@ export interface Event {
 export interface WellbeingData {
   name: Category;
   value: number;
+  [key: string]: any;
 }
 
 export interface Task {
