@@ -1,3 +1,4 @@
+
 export type Category = string;
 
 export interface CategoryConfig {
@@ -31,6 +32,7 @@ export interface Event {
   source?: 'momflow' | 'google';
   subtasks?: Task[];
   audio?: string; // base64 encoded audio data URL
+  memberId?: string; // ID of the family member assigned to this event
 }
 
 export interface WellbeingData {

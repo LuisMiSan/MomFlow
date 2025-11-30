@@ -71,14 +71,16 @@ const initialFamilyProfile: FamilyProfile = {
 const createMockEvents = (source: 'momflow' | 'google'): Event[] => {
     const today = new Date();
     
+    // Assign mock member IDs roughly to test filtering
     const MOMFLOW_TEMPLATES: Omit<Event, 'id' | 'date' | 'source'>[] = [
-      { title: 'Clase de Yoga', category: 'Personal', time: '07:00 PM', reminder: '1h', recurring: 'weekly' },
-      { title: 'Supermercado', category: 'Hogar', recurring: 'weekly' },
+      { title: 'Clase de Yoga', category: 'Personal', time: '07:00 PM', reminder: '1h', recurring: 'weekly', memberId: 'm3' }, // Sarah
+      { title: 'Supermercado', category: 'Hogar', recurring: 'weekly', memberId: 'm1' }, // Kevin
+      { title: 'Partido de Fútbol', category: 'Hijos', time: '04:00 PM', memberId: 'm2' }, // Jason
     ];
 
     const GOOGLE_TEMPLATES: Omit<Event, 'id' | 'date' | 'source'>[] = [
-        { title: 'Reunión de equipo', category: 'Trabajo', time: '10:00 AM', reminder: '15m', recurring: 'none' },
-        { title: 'Entrega proyecto', category: 'Trabajo', time: '05:00 PM' },
+        { title: 'Reunión de equipo', category: 'Trabajo', time: '10:00 AM', reminder: '15m', recurring: 'none', memberId: 'm1' }, // Kevin
+        { title: 'Entrega proyecto', category: 'Trabajo', time: '05:00 PM', memberId: 'm3' }, // Sarah
     ];
     
     const templates = source === 'momflow' ? MOMFLOW_TEMPLATES : GOOGLE_TEMPLATES;
@@ -226,7 +228,13 @@ const App: React.FC = () => {
     let screenComponent;
     switch (modalScreen) {
       case 'calendar':
-        screenComponent = <CalendarScreen events={displayedEvents} setEvents={setMomFlowEvents} categoryConfigs={categoryConfigs} onClearInitialDate={() => {}} />;
+        screenComponent = <CalendarScreen 
+            events={displayedEvents} 
+            setEvents={setMomFlowEvents} 
+            categoryConfigs={categoryConfigs} 
+            onClearInitialDate={() => {}} 
+            familyProfile={familyProfile}
+        />;
         break;
       case 'tasks':
         screenComponent = <TasksScreen taskLists={taskLists} setTaskLists={setTaskLists} onVoiceAddTask={() => {}} />;

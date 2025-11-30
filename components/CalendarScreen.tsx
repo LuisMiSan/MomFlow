@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Event, Category, Task, CategoryConfig } from '../types';
+import { Event, Category, Task, CategoryConfig, FamilyProfile, FamilyMember } from '../types';
 import { XMarkIcon, GoogleIcon, PlusIcon, ClockIcon } from './Icons';
 
 type CalendarView = 'month' | 'week' | 'day';
@@ -20,15 +20,21 @@ interface EventPillProps {
     event: Event;
     onClick: () => void;
     color: string;
+    familyProfile: FamilyProfile;
 }
 
-const EventPill: React.FC<EventPillProps> = ({ event, onClick, color }) => {
+const EventPill: React.FC<EventPillProps> = ({ event, onClick, color, familyProfile }) => {
     const subtaskProgress = useMemo(() => {
         if (!event.subtasks || event.subtasks.length === 0) return null;
         const completed = event.subtasks.filter(st => st.completed).length;
         const total = event.subtasks.length;
         return { completed, total };
     }, [event.subtasks]);
+
+    const assignedMember = useMemo(() => {
+        if (!event.memberId) return null;
+        return familyProfile.members.find(m => m.id === event.memberId);
+    }, [event.memberId, familyProfile.members]);
 
     return (
         <button 
@@ -49,13 +55,24 @@ const EventPill: React.FC<EventPillProps> = ({ event, onClick, color }) => {
                 {event.time && <p className="text-xs font-semibold flex-shrink-0 pl-2" style={{ color: `${color}A0` }}>{event.time}</p>}
             </div>
 
-            {/* Bottom row: Category & Progress */}
+            {/* Bottom row: Category, Member & Progress */}
             <div className="flex justify-between items-center mt-1 text-[10px]">
-                <div 
-                    className="px-2 py-0.5 font-bold rounded"
-                    style={{ backgroundColor: `${color}40`, color }}
-                >
-                    {event.category}
+                <div className="flex items-center space-x-1.5">
+                    <div 
+                        className="px-2 py-0.5 font-bold rounded"
+                        style={{ backgroundColor: `${color}40`, color }}
+                    >
+                        {event.category}
+                    </div>
+                    {assignedMember && (
+                         <div 
+                            className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white"
+                            style={{ backgroundColor: assignedMember.color }}
+                            title={`Asignado a ${assignedMember.name}`}
+                        >
+                            {assignedMember.name.charAt(0)}
+                        </div>
+                    )}
                 </div>
 
                 {subtaskProgress && subtaskProgress.total > 0 && (
@@ -106,9 +123,10 @@ interface EventDetailModalProps {
     onClose: () => void;
     onSave: (event: Event) => void;
     categoryConfigs: CategoryConfig[];
+    familyProfile: FamilyProfile;
 }
 
-const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onSave, categoryConfigs }) => {
+const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onSave, categoryConfigs, familyProfile }) => {
     const [editedEvent, setEditedEvent] = useState(event);
     const [isAddingSubtask, setIsAddingSubtask] = useState(false);
     const [newSubtaskText, setNewSubtaskText] = useState('');
@@ -268,6 +286,23 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
                         </select>
                     </div>
 
+                    {/* Member Assignment */}
+                    <div>
+                        <label htmlFor="member" className="block text-sm font-medium text-momflow-text-light mb-1">Asignado a</label>
+                         <select 
+                            id="member" 
+                            value={editedEvent.memberId || ''} 
+                            onChange={(e) => handleFieldChange('memberId', e.target.value || undefined)} 
+                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-momflow-lavender-dark focus:border-momflow-lavender-dark disabled:bg-gray-100"
+                            disabled={isGoogleEvent}
+                        >
+                            <option value="">Sin asignar (Familiar)</option>
+                            {familyProfile.members.map(member => (
+                                <option key={member.id} value={member.id}>{member.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
                     <div className="space-y-2 pt-2">
                         <div className="flex justify-between items-center">
                             <h4 className="text-sm font-medium text-momflow-text-light">Subtareas</h4>
@@ -384,12 +419,14 @@ interface CalendarScreenProps {
   initialDate?: string;
   onClearInitialDate: () => void;
   categoryConfigs: CategoryConfig[];
+  familyProfile: FamilyProfile;
 }
 
-const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, initialDate, onClearInitialDate, categoryConfigs }) => {
+const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, initialDate, onClearInitialDate, categoryConfigs, familyProfile }) => {
   const [currentDate, setCurrentDate] = useState(initialDate ? parseDateString(initialDate) : new Date());
   const [view, setView] = useState<CalendarView>('day');
   const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>('all');
+  const [selectedMemberId, setSelectedMemberId] = useState<string | 'all'>('all');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const timeoutIdsRef = useRef<Map<string, number>>(new Map());
 
@@ -477,11 +514,12 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
 
 
   const filteredEvents = useMemo(() => {
-    if (selectedCategory === 'all') {
-      return events;
-    }
-    return events.filter(event => event.category === selectedCategory);
-  }, [selectedCategory, events]);
+    return events.filter(event => {
+        const matchesCategory = selectedCategory === 'all' || event.category === selectedCategory;
+        const matchesMember = selectedMemberId === 'all' || event.memberId === selectedMemberId;
+        return matchesCategory && matchesMember;
+    });
+  }, [selectedCategory, selectedMemberId, events]);
 
   const handleSaveEvent = (updatedEvent: Event) => {
     clearReminder(updatedEvent.id);
@@ -540,25 +578,58 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
   
   const renderFilterBar = () => {
     const categories: (Category | 'all')[] = ['all', ...categoryConfigs.map(c => c.name)];
+    const members: (FamilyMember | 'all')[] = ['all', ...familyProfile.members];
     
     return (
-        <div className="flex space-x-2 overflow-x-auto pb-4 -mx-4 px-4 mb-2">
-            {categories.map(cat => {
-                const isSelected = selectedCategory === cat;
-                const baseStyle = "px-3 py-1.5 text-sm font-semibold rounded-full whitespace-nowrap transition-colors";
-                const selectedStyle = `bg-momflow-lavender-dark text-white shadow`;
-                const unselectedStyle = "bg-white hover:bg-momflow-lavender text-momflow-text-light";
+        <div className="mb-2">
+            {/* Category Filter */}
+            <div className="flex space-x-2 overflow-x-auto pb-2 -mx-4 px-4 mb-1 no-scrollbar">
+                {categories.map(cat => {
+                    const isSelected = selectedCategory === cat;
+                    const baseStyle = "px-3 py-1.5 text-sm font-semibold rounded-full whitespace-nowrap transition-colors";
+                    const selectedStyle = `bg-momflow-lavender-dark text-white shadow`;
+                    const unselectedStyle = "bg-white hover:bg-momflow-lavender text-momflow-text-light";
 
-                return (
-                    <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`${baseStyle} ${isSelected ? selectedStyle : unselectedStyle}`}
-                    >
-                        {cat === 'all' ? 'Todas' : cat}
-                    </button>
-                );
-            })}
+                    return (
+                        <button
+                            key={cat}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`${baseStyle} ${isSelected ? selectedStyle : unselectedStyle}`}
+                        >
+                            {cat === 'all' ? 'Todas' : cat}
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Member Filter */}
+            <div className="flex space-x-3 overflow-x-auto pb-2 -mx-4 px-4 no-scrollbar items-center">
+                 <button
+                    onClick={() => setSelectedMemberId('all')}
+                    className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all ${selectedMemberId === 'all' ? 'border-momflow-lavender-dark bg-momflow-lavender-dark text-white' : 'border-gray-200 bg-white text-gray-500'}`}
+                    title="Todos los miembros"
+                >
+                    <i className="fa-solid fa-users text-xs"></i>
+                </button>
+                {familyProfile.members.map(member => {
+                    const isSelected = selectedMemberId === member.id;
+                    return (
+                        <button
+                            key={member.id}
+                            onClick={() => setSelectedMemberId(isSelected ? 'all' : member.id)}
+                            className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all shadow-sm ${isSelected ? 'ring-2 ring-offset-1 ring-momflow-lavender-dark' : 'opacity-80 hover:opacity-100'}`}
+                            style={{ 
+                                backgroundColor: member.color, 
+                                borderColor: isSelected ? member.color : 'transparent',
+                                color: 'white'
+                            }}
+                            title={member.name}
+                        >
+                            <span className="text-xs font-bold">{member.name.charAt(0)}</span>
+                        </button>
+                    );
+                })}
+            </div>
         </div>
     );
   };
@@ -586,7 +657,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
                     {day}
                 </span>
                 <div className="space-y-1 mt-1 overflow-y-auto flex-grow">
-                    {dayEvents.slice(0, 3).map(event => <EventPill key={event.id} event={event} onClick={() => setSelectedEvent(event)} color={categoryColorMap[event.category] || '#d1d5db'} />)}
+                    {dayEvents.slice(0, 3).map(event => <EventPill key={event.id} event={event} onClick={() => setSelectedEvent(event)} color={categoryColorMap[event.category] || '#d1d5db'} familyProfile={familyProfile} />)}
                     {dayEvents.length > 3 && <p className="text-xs text-center text-gray-500 mt-1">+{dayEvents.length - 3} más</p>}
                 </div>
             </div>
@@ -631,7 +702,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
                         </h3>
                         {dayEvents.length > 0 ? (
                             <div className="space-y-1.5">
-                                {dayEvents.map(event => <EventPill key={event.id} event={event} onClick={() => setSelectedEvent(event)} color={categoryColorMap[event.category] || '#d1d5db'} />)}
+                                {dayEvents.map(event => <EventPill key={event.id} event={event} onClick={() => setSelectedEvent(event)} color={categoryColorMap[event.category] || '#d1d5db'} familyProfile={familyProfile} />)}
                             </div>
                         ) : (
                             <p className="text-xs text-gray-400 italic">Sin eventos.</p>
@@ -652,38 +723,46 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
     const dayEvents = filteredEvents.filter(e => e.date === dateString).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
     const selectedCategoryName = selectedCategory === 'all' ? 'Todas' : selectedCategory;
+    const selectedMemberName = selectedMemberId === 'all' ? 'Todos' : familyProfile.members.find(m => m.id === selectedMemberId)?.name;
     const selectedCategoryColor = selectedCategory === 'all' 
         ? '#3D345C' 
         : categoryConfigs.find(c => c.name === selectedCategory)?.color || '#3D345C';
 
     return (
         <div className={`p-4 rounded-lg space-y-4 ${isToday ? 'bg-momflow-lavender/40' : 'bg-white/70'} min-h-[300px]`}>
-             <div className="flex items-center justify-between mb-2">
+             <div className="flex flex-col mb-2">
                  <h3 className="font-bold text-xl text-momflow-text-dark">
                     Eventos del día
                 </h3>
-                {selectedCategory !== 'all' && (
-                    <span 
-                        className="px-2 py-1 rounded-full text-xs font-bold border"
-                        style={{ 
-                            backgroundColor: `${selectedCategoryColor}20`, 
-                            color: selectedCategoryColor,
-                            borderColor: `${selectedCategoryColor}40`
-                        }}
-                    >
-                        {selectedCategoryName}
-                    </span>
-                )}
+                <div className="flex gap-2 mt-1">
+                    {selectedCategory !== 'all' && (
+                        <span 
+                            className="px-2 py-1 rounded-full text-xs font-bold border"
+                            style={{ 
+                                backgroundColor: `${selectedCategoryColor}20`, 
+                                color: selectedCategoryColor,
+                                borderColor: `${selectedCategoryColor}40`
+                            }}
+                        >
+                            {selectedCategoryName}
+                        </span>
+                    )}
+                    {selectedMemberId !== 'all' && (
+                         <span className="px-2 py-1 rounded-full text-xs font-bold border bg-gray-100 text-gray-700 border-gray-300">
+                             {selectedMemberName}
+                         </span>
+                    )}
+                </div>
              </div>
 
             {dayEvents.length > 0 ? (
                 <div className="space-y-2">
-                    {dayEvents.map(event => <EventPill key={event.id} event={event} onClick={() => setSelectedEvent(event)} color={categoryColorMap[event.category] || '#d1d5db'} />)}
+                    {dayEvents.map(event => <EventPill key={event.id} event={event} onClick={() => setSelectedEvent(event)} color={categoryColorMap[event.category] || '#d1d5db'} familyProfile={familyProfile} />)}
                 </div>
             ) : (
                 <div className="text-center py-10 flex flex-col items-center justify-center text-momflow-text-light opacity-70">
                     <i className="fa-regular fa-calendar-xmark text-3xl mb-2"></i>
-                    <p>No hay eventos {selectedCategory !== 'all' ? `de ${selectedCategory}` : ''} para este día.</p>
+                    <p>No hay eventos {selectedCategory !== 'all' ? `de ${selectedCategory}` : ''} {selectedMemberId !== 'all' ? `para ${selectedMemberName}` : ''} este día.</p>
                 </div>
             )}
         </div>
@@ -701,7 +780,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
         {view === 'week' && renderWeekView()}
         {view === 'day' && renderDayView()}
       </div>
-      {selectedEvent && <EventDetailModal event={selectedEvent} onClose={() => setSelectedEvent(null)} onSave={handleSaveEvent} categoryConfigs={categoryConfigs} />}
+      {selectedEvent && <EventDetailModal event={selectedEvent} onClose={() => setSelectedEvent(null)} onSave={handleSaveEvent} categoryConfigs={categoryConfigs} familyProfile={familyProfile} />}
     </div>
   );
 };
