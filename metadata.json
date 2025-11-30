@@ -1,5 +1,5 @@
 {
-  "name": "FamilyFlow",
+  "name": "FamilyFlow AI",
   "description": "FamilyFlow: Organiza tu vida familiar con LINA, tu asistente inteligente. Comparte calendarios, tareas y contactos de forma sencilla.",
   "requestFramePermissions": [
     "microphone"
