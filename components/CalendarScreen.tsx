@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Event, Category, Task, CategoryConfig, FamilyProfile, FamilyMember } from '../types';
 import { XMarkIcon, GoogleIcon, PlusIcon, ClockIcon } from './Icons';
+import { useLanguage } from '../translations';
 
 type CalendarView = 'month' | 'week' | 'day';
 
@@ -105,17 +106,17 @@ const parseDateString = (dateString: string): Date => {
 
 const reminderOptions: { [key: string]: string } = {
     'none': 'Sin recordatorio',
-    '5m': '5 minutos antes',
-    '15m': '15 minutos antes',
-    '1h': '1 hora antes',
-    '1d': '1 día antes'
+    '5m': '5m',
+    '15m': '15m',
+    '1h': '1h',
+    '1d': '1d'
 };
 
 const recurringOptions: { [key: string]: string } = {
-    'none': 'No se repite',
-    'daily': 'Diariamente',
-    'weekly': 'Semanalmente',
-    'monthly': 'Mensualmente'
+    'none': 'No',
+    'daily': 'Diario',
+    'weekly': 'Semanal',
+    'monthly': 'Mensual'
 };
 
 interface EventDetailModalProps {
@@ -127,6 +128,7 @@ interface EventDetailModalProps {
 }
 
 const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onSave, categoryConfigs, familyProfile }) => {
+    const { t, language } = useLanguage();
     const [editedEvent, setEditedEvent] = useState(event);
     const [isAddingSubtask, setIsAddingSubtask] = useState(false);
     const [newSubtaskText, setNewSubtaskText] = useState('');
@@ -239,7 +241,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
         return { completed, total };
     }, [editedEvent.subtasks]);
 
-    const formattedDate = new Intl.DateTimeFormat('es-ES', { dateStyle: 'full' }).format(parseDateString(editedEvent.date));
+    const formattedDate = new Intl.DateTimeFormat(language === 'es' ? 'es-ES' : 'en-US', { dateStyle: 'full' }).format(parseDateString(editedEvent.date));
     const currentCategoryColor = categoryColorMap[editedEvent.category] || '#d1d5db';
 
     return (
@@ -257,7 +259,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
                 <div className="p-4 space-y-4 max-h-[80vh] overflow-y-auto">
                      {isGoogleEvent && (
                         <div className="bg-blue-50 text-blue-700 p-2 text-xs text-center rounded-lg">
-                            Este evento está sincronizado con Google Calendar.
+                            Google Calendar Event
                         </div>
                     )}
                     <div className="text-sm">
@@ -267,13 +269,13 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
                     
                     {editedEvent.audio && (
                         <div>
-                            <h4 className="text-sm font-medium text-momflow-text-light mb-1">Recordatorio de Voz</h4>
+                            <h4 className="text-sm font-medium text-momflow-text-light mb-1">Audio</h4>
                             <audio controls src={editedEvent.audio} className="w-full h-10"></audio>
                         </div>
                     )}
 
                     <div>
-                        <label htmlFor="category" className="block text-sm font-medium text-momflow-text-light mb-1">Categoría</label>
+                        <label htmlFor="category" className="block text-sm font-medium text-momflow-text-light mb-1">Category</label>
                         <select 
                             id="category" 
                             value={editedEvent.category} 
@@ -288,7 +290,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
 
                     {/* Member Assignment */}
                     <div>
-                        <label htmlFor="member" className="block text-sm font-medium text-momflow-text-light mb-1">Asignado a</label>
+                        <label htmlFor="member" className="block text-sm font-medium text-momflow-text-light mb-1">Member</label>
                          <select 
                             id="member" 
                             value={editedEvent.memberId || ''} 
@@ -296,7 +298,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
                             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-momflow-lavender-dark focus:border-momflow-lavender-dark disabled:bg-gray-100"
                             disabled={isGoogleEvent}
                         >
-                            <option value="">Sin asignar (Familiar)</option>
+                            <option value="">--</option>
                             {familyProfile.members.map(member => (
                                 <option key={member.id} value={member.id}>{member.name}</option>
                             ))}
@@ -305,7 +307,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
 
                     <div className="space-y-2 pt-2">
                         <div className="flex justify-between items-center">
-                            <h4 className="text-sm font-medium text-momflow-text-light">Subtareas</h4>
+                            <h4 className="text-sm font-medium text-momflow-text-light">Subtasks</h4>
                             {subtaskCompletion && (
                                 <span className="text-xs font-semibold text-momflow-text-light">
                                     {subtaskCompletion.completed}/{subtaskCompletion.total}
@@ -338,7 +340,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
                                 onChange={e => setNewSubtaskText(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && handleAddNewSubtask()}
                                 onBlur={handleAddNewSubtask}
-                                placeholder="Añadir subtarea..."
+                                placeholder={t.tasks.addSubtask}
                                 autoFocus
                                 className="w-full mt-2 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-momflow-lavender-dark"
                             />
@@ -349,7 +351,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
                                     className="text-sm text-momflow-lavender-dark hover:underline mt-1 flex items-center space-x-1"
                                 >
                                     <PlusIcon className="w-3 h-3" />
-                                    <span>Añadir subtarea</span>
+                                    <span>{t.common.add}</span>
                                 </button>
                             )
                         )}
@@ -360,7 +362,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
                     <div>
                         <h4 className="text-sm font-medium text-momflow-text-light mb-2 flex items-center space-x-1.5">
                             <ClockIcon className="w-4 h-4" />
-                            <span>Posponer Evento</span>
+                            <span>{t.calendar.postpone}</span>
                         </h4>
                         <div className="flex space-x-2">
                             <button
@@ -368,21 +370,21 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
                                 disabled={isGoogleEvent || !editedEvent.time}
                                 className="flex-1 text-xs bg-gray-100 text-momflow-text-dark font-semibold py-1.5 px-2 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                +1 hora
+                                +1h
                             </button>
                             <button
                                 onClick={() => handlePostpone('day')}
                                 disabled={isGoogleEvent}
                                 className="flex-1 text-xs bg-gray-100 text-momflow-text-dark font-semibold py-1.5 px-2 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Mañana
+                                +1d
                             </button>
                             <button
                                 onClick={() => handlePostpone('week')}
                                 disabled={isGoogleEvent}
                                 className="flex-1 text-xs bg-gray-100 text-momflow-text-dark font-semibold py-1.5 px-2 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                +1 semana
+                                +1w
                             </button>
                         </div>
                     </div>
@@ -390,14 +392,13 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
                     <hr className="my-2"/>
                     
                     <div>
-                        <label htmlFor="reminder" className="block text-sm font-medium text-momflow-text-light mb-1">Recordatorio</label>
+                        <label htmlFor="reminder" className="block text-sm font-medium text-momflow-text-light mb-1">{t.calendar.reminders}</label>
                         <select id="reminder" value={editedEvent.reminder || 'none'} onChange={(e) => handleFieldChange('reminder', e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-momflow-lavender-dark focus:border-momflow-lavender-dark disabled:bg-gray-100" disabled={!editedEvent.time || isGoogleEvent}>
                             {Object.entries(reminderOptions).map(([key, value]) => <option key={key} value={key}>{value}</option>)}
                         </select>
-                        {!editedEvent.time && <p className="text-xs text-gray-400 mt-1">Los recordatorios solo están disponibles para eventos con hora.</p>}
                     </div>
                      <div>
-                        <label htmlFor="recurring" className="block text-sm font-medium text-momflow-text-light mb-1">Repetir</label>
+                        <label htmlFor="recurring" className="block text-sm font-medium text-momflow-text-light mb-1">{t.calendar.repeat}</label>
                         <select id="recurring" value={editedEvent.recurring || 'none'} onChange={(e) => handleFieldChange('recurring', e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-momflow-lavender-dark focus:border-momflow-lavender-dark disabled:bg-gray-100" disabled={isGoogleEvent}>
                             {Object.entries(recurringOptions).map(([key, value]) => <option key={key} value={key}>{value}</option>)}
                         </select>
@@ -405,7 +406,7 @@ const EventDetailModal: React.FC<EventDetailModalProps> = ({ event, onClose, onS
                 </div>
                 <footer className="p-4 bg-gray-50 rounded-b-2xl">
                     <button onClick={handleSave} className="w-full bg-momflow-coral text-white font-bold py-2 px-4 rounded-lg hover:bg-red-400 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed" disabled={isGoogleEvent}>
-                        {isGoogleEvent ? 'Edita en Google Calendar' : 'Guardar Cambios'}
+                        {t.common.save}
                     </button>
                 </footer>
             </div>
@@ -423,6 +424,7 @@ interface CalendarScreenProps {
 }
 
 const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, initialDate, onClearInitialDate, categoryConfigs, familyProfile }) => {
+  const { t, language } = useLanguage();
   const [currentDate, setCurrentDate] = useState(initialDate ? parseDateString(initialDate) : new Date());
   const [view, setView] = useState<CalendarView>('day');
   const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>('all');
@@ -527,7 +529,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
     setEvents(prevEvents => prevEvents.map(e => e.id === updatedEvent.id ? updatedEvent : e));
   };
 
-  const daysOfWeek = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+  const daysOfWeek = language === 'es' ? ['D', 'L', 'M', 'X', 'J', 'V', 'S'] : ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   const today = new Date();
 
   const changeDate = (amount: number) => {
@@ -542,8 +544,9 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
 
   const renderHeader = () => {
     let title = '';
-    const monthFormat = new Intl.DateTimeFormat('es-ES', { month: 'long' });
-    const dayFormat = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+    const locale = language === 'es' ? 'es-ES' : 'en-US';
+    const monthFormat = new Intl.DateTimeFormat(locale, { month: 'long' });
+    const dayFormat = new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long' });
 
     if (view === 'month') {
         title = `${monthFormat.format(currentDate)} ${currentDate.getFullYear()}`;
@@ -568,7 +571,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
               onClick={() => setView(v)}
               className={`px-4 py-1 rounded-full font-semibold transition-colors ${view === v ? 'bg-white shadow' : 'text-gray-600'}`}
             >
-              {v === 'day' ? 'Día' : v === 'week' ? 'Semana' : 'Mes'}
+              {v === 'day' ? t.calendar.day : v === 'week' ? t.calendar.week : t.calendar.month}
             </button>
           ))}
         </div>
@@ -578,7 +581,6 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
   
   const renderFilterBar = () => {
     const categories: (Category | 'all')[] = ['all', ...categoryConfigs.map(c => c.name)];
-    const members: (FamilyMember | 'all')[] = ['all', ...familyProfile.members];
     
     return (
         <div className="mb-2">
@@ -596,7 +598,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
                             onClick={() => setSelectedCategory(cat)}
                             className={`${baseStyle} ${isSelected ? selectedStyle : unselectedStyle}`}
                         >
-                            {cat === 'all' ? 'Todas' : cat}
+                            {cat === 'all' ? t.calendar.allCategories : cat}
                         </button>
                     );
                 })}
@@ -607,7 +609,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
                  <button
                     onClick={() => setSelectedMemberId('all')}
                     className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all ${selectedMemberId === 'all' ? 'border-momflow-lavender-dark bg-momflow-lavender-dark text-white' : 'border-gray-200 bg-white text-gray-500'}`}
-                    title="Todos los miembros"
+                    title={t.calendar.allMembers}
                 >
                     <i className="fa-solid fa-users text-xs"></i>
                 </button>
@@ -658,7 +660,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
                 </span>
                 <div className="space-y-1 mt-1 overflow-y-auto flex-grow">
                     {dayEvents.slice(0, 3).map(event => <EventPill key={event.id} event={event} onClick={() => setSelectedEvent(event)} color={categoryColorMap[event.category] || '#d1d5db'} familyProfile={familyProfile} />)}
-                    {dayEvents.length > 3 && <p className="text-xs text-center text-gray-500 mt-1">+{dayEvents.length - 3} más</p>}
+                    {dayEvents.length > 3 && <p className="text-xs text-center text-gray-500 mt-1">+{dayEvents.length - 3}...</p>}
                 </div>
             </div>
         );
@@ -684,6 +686,8 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
         return date;
     });
 
+    const locale = language === 'es' ? 'es-ES' : 'en-US';
+
     return (
         <div className="space-y-3">
             {weekDays.map(date => {
@@ -697,7 +701,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
                 return (
                     <div key={dateString} className={`p-3 rounded-lg ${isToday ? 'bg-momflow-lavender/40' : 'bg-white/70'}`}>
                         <h3 className="font-bold text-momflow-text-dark mb-2">
-                            {new Intl.DateTimeFormat('es-ES', { weekday: 'long' }).format(date)}{' '}
+                            {new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(date)}{' '}
                             <span className="text-sm font-normal text-momflow-text-light">{day}</span>
                         </h3>
                         {dayEvents.length > 0 ? (
@@ -705,7 +709,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
                                 {dayEvents.map(event => <EventPill key={event.id} event={event} onClick={() => setSelectedEvent(event)} color={categoryColorMap[event.category] || '#d1d5db'} familyProfile={familyProfile} />)}
                             </div>
                         ) : (
-                            <p className="text-xs text-gray-400 italic">Sin eventos.</p>
+                            <p className="text-xs text-gray-400 italic">{t.calendar.noEventsDay}</p>
                         )}
                     </div>
                 );
@@ -722,8 +726,8 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
     const isToday = currentDate.toDateString() === today.toDateString();
     const dayEvents = filteredEvents.filter(e => e.date === dateString).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
-    const selectedCategoryName = selectedCategory === 'all' ? 'Todas' : selectedCategory;
-    const selectedMemberName = selectedMemberId === 'all' ? 'Todos' : familyProfile.members.find(m => m.id === selectedMemberId)?.name;
+    const selectedCategoryName = selectedCategory === 'all' ? t.calendar.allCategories : selectedCategory;
+    const selectedMemberName = selectedMemberId === 'all' ? t.calendar.allMembers : familyProfile.members.find(m => m.id === selectedMemberId)?.name;
     const selectedCategoryColor = selectedCategory === 'all' 
         ? '#3D345C' 
         : categoryConfigs.find(c => c.name === selectedCategory)?.color || '#3D345C';
@@ -732,7 +736,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
         <div className={`p-4 rounded-lg space-y-4 ${isToday ? 'bg-momflow-lavender/40' : 'bg-white/70'} min-h-[300px]`}>
              <div className="flex flex-col mb-2">
                  <h3 className="font-bold text-xl text-momflow-text-dark">
-                    Eventos del día
+                    {t.calendar.dayEvents}
                 </h3>
                 <div className="flex gap-2 mt-1">
                     {selectedCategory !== 'all' && (
@@ -762,7 +766,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, setEvents, init
             ) : (
                 <div className="text-center py-10 flex flex-col items-center justify-center text-momflow-text-light opacity-70">
                     <i className="fa-regular fa-calendar-xmark text-3xl mb-2"></i>
-                    <p>No hay eventos {selectedCategory !== 'all' ? `de ${selectedCategory}` : ''} {selectedMemberId !== 'all' ? `para ${selectedMemberName}` : ''} este día.</p>
+                    <p>{t.calendar.noEventsDay}</p>
                 </div>
             )}
         </div>

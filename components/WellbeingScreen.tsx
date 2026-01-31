@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { Category, WellbeingData, CategoryConfig, Event } from '../types';
 import { getWellbeingTip } from '../services/geminiService';
 import { LoadingIcon, SparklesIcon, CalendarDaysIcon } from './Icons';
+import { useLanguage } from '../translations';
 
 // Data can be shared from a central place later
 const wellbeingData: WellbeingData[] = [
@@ -27,6 +28,7 @@ interface WellbeingScreenProps {
 }
 
 const WellbeingScreen: React.FC<WellbeingScreenProps> = ({ categoryConfigs, events }) => {
+  const { t, language } = useLanguage();
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [aiTip, setAiTip] = useState<string>('');
 
@@ -66,21 +68,16 @@ const WellbeingScreen: React.FC<WellbeingScreenProps> = ({ categoryConfigs, even
     }).sort((a, b) => a.date.localeCompare(b.date));
   }, [events]);
 
-  const formatDate = (dateString: string) => {
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' }).format(date);
-  };
-
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-3xl font-bold text-momflow-text-dark">Panel de Bienestar</h1>
-        <p className="text-momflow-text-light">Tu espacio para conectar contigo misma.</p>
+        <h1 className="text-3xl font-bold text-momflow-text-dark">{t.wellbeing.title}</h1>
+        <p className="text-momflow-text-light">{t.wellbeing.subtitle}</p>
       </header>
 
       {/* Mood Tracker */}
       <section className="bg-white p-4 rounded-xl shadow-md">
-        <h2 className="text-xl font-semibold mb-4 text-momflow-text-dark text-center">¿Cómo te sientes hoy?</h2>
+        <h2 className="text-xl font-semibold mb-4 text-momflow-text-dark text-center">{t.wellbeing.moodTitle}</h2>
         <div className="flex justify-around items-center">
           {moods.map(({ emoji, label }) => (
             <button
@@ -95,7 +92,7 @@ const WellbeingScreen: React.FC<WellbeingScreenProps> = ({ categoryConfigs, even
           ))}
         </div>
         {selectedMood && (
-          <p className="text-center mt-4 text-momflow-sage font-semibold">¡Gracias por compartir cómo te sientes!</p>
+          <p className="text-center mt-4 text-momflow-sage font-semibold">{t.wellbeing.moodThanks}</p>
         )}
       </section>
 
@@ -103,7 +100,7 @@ const WellbeingScreen: React.FC<WellbeingScreenProps> = ({ categoryConfigs, even
       <section className="bg-white p-4 rounded-xl shadow-md border-l-4 border-momflow-coral">
           <div className="flex items-center space-x-2 mb-4">
               <SparklesIcon className="w-6 h-6 text-momflow-coral" />
-              <h2 className="text-xl font-semibold text-momflow-text-dark">Mi Cuidado y Salud</h2>
+              <h2 className="text-xl font-semibold text-momflow-text-dark">{t.wellbeing.selfCareTitle}</h2>
           </div>
           
           {selfCareEvents.length > 0 ? (
@@ -111,7 +108,7 @@ const WellbeingScreen: React.FC<WellbeingScreenProps> = ({ categoryConfigs, even
                   {selfCareEvents.slice(0, 3).map(event => (
                       <div key={event.id} className="flex items-center bg-gray-50 p-3 rounded-lg hover:bg-momflow-lavender/20 transition-colors">
                            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-full flex flex-col items-center justify-center border border-gray-100 shadow-sm mr-3">
-                                <span className="text-xs font-bold text-gray-500 uppercase">{new Intl.DateTimeFormat('es-ES', { month: 'short' }).format(new Date(event.date))}</span>
+                                <span className="text-xs font-bold text-gray-500 uppercase">{new Intl.DateTimeFormat(language === 'es' ? 'es-ES' : 'en-US', { month: 'short' }).format(new Date(event.date))}</span>
                                 <span className="text-lg font-bold text-momflow-text-dark">{new Date(event.date).getDate()}</span>
                            </div>
                            <div className="flex-1 min-w-0">
@@ -126,20 +123,19 @@ const WellbeingScreen: React.FC<WellbeingScreenProps> = ({ categoryConfigs, even
                       </div>
                   ))}
                   {selfCareEvents.length > 3 && (
-                      <p className="text-center text-xs text-gray-400 mt-2">+{selfCareEvents.length - 3} eventos más...</p>
+                      <p className="text-center text-xs text-gray-400 mt-2">+{selfCareEvents.length - 3}...</p>
                   )}
               </div>
           ) : (
               <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                  <p className="text-momflow-text-light font-medium">No tienes eventos de autocuidado próximos.</p>
-                  <p className="text-xs text-gray-400 mt-1">¡Es un buen momento para agendar un masaje o una clase de yoga!</p>
+                  <p className="text-momflow-text-light font-medium">{t.wellbeing.noSelfCare}</p>
               </div>
           )}
       </section>
       
       {/* Weekly Balance Chart */}
       <section className="bg-white p-4 rounded-xl shadow-md">
-        <h2 className="text-xl font-semibold mb-3 text-momflow-text-dark text-center">Balance Semanal</h2>
+        <h2 className="text-xl font-semibold mb-3 text-momflow-text-dark text-center">{t.wellbeing.balanceTitle}</h2>
         <div className="w-full h-64 relative min-w-0">
           <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <PieChart>
@@ -157,13 +153,13 @@ const WellbeingScreen: React.FC<WellbeingScreenProps> = ({ categoryConfigs, even
 
       {/* AI Self-care Tip */}
       <section className="bg-momflow-sage/30 p-4 rounded-xl shadow-md">
-        <h2 className="text-lg font-semibold mb-2 text-momflow-text-dark">Tu Momento de Autocuidado</h2>
+        <h2 className="text-lg font-semibold mb-2 text-momflow-text-dark">{t.wellbeing.tipTitle}</h2>
         {aiTip ? (
           <p className="text-momflow-text-dark italic">"{aiTip}"</p>
         ) : (
           <div className="flex items-center space-x-2 text-momflow-text-light">
              <LoadingIcon className="w-5 h-5 animate-spin" /> 
-             <span>Generando un consejo para ti...</span>
+             <span>{t.wellbeing.generating}</span>
           </div>
         )}
       </section>

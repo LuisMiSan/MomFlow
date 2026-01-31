@@ -1,8 +1,8 @@
 
-
 import React, { useState } from 'react';
 import { Task, TaskList } from '../types';
 import { PlusIcon } from './Icons';
+import { useLanguage } from '../translations';
 
 interface TasksScreenProps {
     taskLists: TaskList[];
@@ -11,6 +11,7 @@ interface TasksScreenProps {
 }
 
 const TasksScreen: React.FC<TasksScreenProps> = ({ taskLists, setTaskLists, onVoiceAddTask }) => {
+    const { t } = useLanguage();
     const [addingSubtaskTo, setAddingSubtaskTo] = useState<string | null>(null);
     const [newSubtaskText, setNewSubtaskText] = useState('');
 
@@ -120,7 +121,7 @@ const TasksScreen: React.FC<TasksScreenProps> = ({ taskLists, setTaskLists, onVo
                                 <button
                                     onClick={() => handleInitiateAddSubtask(task.id)}
                                     className="opacity-0 group-hover:opacity-100 text-momflow-lavender-dark hover:text-momflow-lavender-dark focus:opacity-100 transition-opacity"
-                                    aria-label="Añadir subtarea"
+                                    aria-label={t.tasks.addSubtask}
                                 >
                                     <PlusIcon className="w-4 h-4" />
                                 </button>
@@ -138,7 +139,7 @@ const TasksScreen: React.FC<TasksScreenProps> = ({ taskLists, setTaskLists, onVo
                                                 if (e.key === 'Escape') setAddingSubtaskTo(null);
                                             }}
                                             onBlur={() => handleAddSubtask(listId, task.id)}
-                                            placeholder="Añadir subtarea..."
+                                            placeholder={t.tasks.addSubtask}
                                             autoFocus
                                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-momflow-lavender-dark"
                                         />
@@ -155,8 +156,8 @@ const TasksScreen: React.FC<TasksScreenProps> = ({ taskLists, setTaskLists, onVo
     return (
         <div className="space-y-6">
             <header>
-                <h1 className="text-3xl font-bold text-momflow-text-dark">Mis Tareas</h1>
-                <p className="text-momflow-text-light">Organiza tus pendientes y libera tu mente.</p>
+                <h1 className="text-3xl font-bold text-momflow-text-dark">{t.tasks.title}</h1>
+                <p className="text-momflow-text-light">{t.tasks.subtitle}</p>
             </header>
 
             <div className="space-y-4">
@@ -182,8 +183,7 @@ const TasksScreen: React.FC<TasksScreenProps> = ({ taskLists, setTaskLists, onVo
                 })}
                  {taskLists.length === 0 && (
                     <div className="text-center py-16">
-                        <p className="text-lg text-momflow-text-light">No tienes ninguna lista de tareas.</p>
-                        <p className="text-sm text-gray-400 mt-2">Usa el asistente para crear tareas y listas.</p>
+                        <p className="text-lg text-momflow-text-light">{t.tasks.empty}</p>
                     </div>
                 )}
             </div>

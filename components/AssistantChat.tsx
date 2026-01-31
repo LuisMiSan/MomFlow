@@ -7,6 +7,7 @@ import {
 } from './Icons';
 import { LiveSession, LiveServerMessage } from '@google/genai';
 import { Event, Contact, FamilyProfile } from '../types';
+import { useLanguage } from '../translations';
 
 interface Message {
   text: string;
@@ -59,7 +60,8 @@ async function decodeAudioData(data: Uint8Array, ctx: AudioContext, sampleRate: 
 }
 
 const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, onAddEvent, onAddContact, isGoogleCalendarConnected, familyProfile }) => {
-  const [messages, setMessages] = useState<Message[]>([{ text: 'Hola, soy LINA. ¿En qué puedo ayudarte hoy?', isUser: false }]);
+  const { t } = useLanguage();
+  const [messages, setMessages] = useState<Message[]>([{ text: t.assistant.intro, isUser: false }]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLive, setIsLive] = useState(false);
@@ -75,6 +77,13 @@ const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, 
   const toolCalledThisTurn = useRef(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Update initial message when language changes, but only if it's the only message
+  useEffect(() => {
+    if (messages.length === 1 && !messages[0].isUser) {
+        setMessages([{ text: t.assistant.intro, isUser: false }]);
+    }
+  }, [t.assistant.intro]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -160,7 +169,7 @@ const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, 
                     scriptProcessor.current.connect(audioContext.current.destination);
                 } catch (err) {
                     console.error("Microphone access denied:", err);
-                    setMessages(prev => [...prev, { text: "Error: Se necesita acceso al micrófono.", isUser: false }]);
+                    setMessages(prev => [...prev, { text: t.assistant.micAccessError, isUser: false }]);
                     setIsConnecting(false);
                 }
             },
@@ -221,7 +230,7 @@ const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, 
             },
             onerror: (e) => {
                 console.error('Live session error:', e);
-                setMessages(prev => [...prev, { text: "Error de conexión. Intenta de nuevo.", isUser: false }]);
+                setMessages(prev => [...prev, { text: t.assistant.connectionError, isUser: false }]);
                 if (isLive) handleLiveToggle();
             },
             onclose: () => {
@@ -233,32 +242,32 @@ const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, 
   };
 
   const navItems = [
-    { label: 'Calendario', screen: 'calendar' as Screen, icon: CalendarDaysIcon },
-    { label: 'Tareas', screen: 'tasks' as Screen, icon: ClipboardListIcon },
-    { label: 'Comidas', screen: 'meals' as Screen, icon: CakeIcon },
-    { label: 'Contactos', screen: 'contacts' as Screen, icon: UsersIcon },
-    { label: 'Bienestar', screen: 'wellbeing' as Screen, icon: SparklesIcon },
-    { label: 'Compras', screen: 'shopping' as Screen, icon: ShoppingBagIcon },
-    { label: 'Ajustes', screen: 'settings' as Screen, icon: Cog6ToothIcon },
+    { label: t.nav.calendar, screen: 'calendar' as Screen, icon: CalendarDaysIcon },
+    { label: t.nav.tasks, screen: 'tasks' as Screen, icon: ClipboardListIcon },
+    { label: t.nav.meals, screen: 'meals' as Screen, icon: CakeIcon },
+    { label: t.nav.contacts, screen: 'contacts' as Screen, icon: UsersIcon },
+    { label: t.nav.wellbeing, screen: 'wellbeing' as Screen, icon: SparklesIcon },
+    { label: t.nav.shopping, screen: 'shopping' as Screen, icon: ShoppingBagIcon },
+    { label: t.nav.settings, screen: 'settings' as Screen, icon: Cog6ToothIcon },
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-[#38a6e9] relative">
-      {/* Background Image Layer */}
-      <div className="absolute top-0 left-0 w-full h-1/2 z-0">
+    <div className="flex flex-col h-full bg-[#38a6e9] relative overflow-hidden">
+      {/* Background Image Layer - Responsive Height */}
+      <div className="absolute top-0 left-0 w-full h-[45vh] md:h-64 z-0 transition-all duration-300">
          <img 
             src={familyProfile.photoUrl} 
             alt="Family" 
             className="w-full h-full object-cover opacity-90" 
          />
-         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#38a6e9]/20"></div>
+         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#38a6e9]/40"></div>
       </div>
 
-      {/* Main Content Card - Curved Up */}
-      <div className="flex flex-col flex-1 z-10 mt-[35vh] bg-white rounded-t-[30px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] overflow-hidden">
+      {/* Main Content Card - Curved Up - Responsive Margin */}
+      <div className="flex flex-col flex-1 z-10 mt-[35vh] md:mt-48 bg-white rounded-t-[30px] md:rounded-t-none md:rounded-tr-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] overflow-hidden transition-all duration-300 border-r border-gray-100">
          
-         {/* Small handle indicator */}
-         <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3 mb-1"></div>
+         {/* Small handle indicator (Mobile only) */}
+         <div className="md:hidden w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3 mb-1"></div>
 
          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
             {messages.map((msg, index) => (
@@ -279,7 +288,7 @@ const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, 
                     </div>
                 </div>
             )}
-            <div ref={messagesEndRef} className="pb-20" /> {/* Extra padding for input area */}
+            <div ref={messagesEndRef} className="pb-2" />
         </div>
 
         {/* Input Area */}
@@ -290,8 +299,8 @@ const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, 
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                    placeholder="Escribe un mensaje..."
-                    className="flex-1 px-4 py-2 bg-transparent text-gray-700 placeholder-gray-400 focus:outline-none"
+                    placeholder={t.assistant.inputPlaceholder}
+                    className="flex-1 px-4 py-2 bg-transparent text-gray-700 placeholder-gray-400 focus:outline-none text-sm"
                     disabled={isLoading || isLive}
                 />
                 <button 
@@ -311,17 +320,19 @@ const LinaChatScreen: React.FC<LinaChatScreenProps> = ({ onNavigate, onAddTask, 
             </div>
         </div>
 
-        {/* Bottom Navigation */}
-        <nav className="grid grid-cols-7 gap-1 p-2 bg-white border-t border-gray-100 pb-safe">
+        {/* Bottom Navigation Grid */}
+        <nav className="grid grid-cols-4 md:grid-cols-4 gap-2 p-3 bg-white border-t border-gray-100 pb-safe md:pb-4">
             {navItems.map(item => (
             <button
                 key={item.screen}
                 onClick={() => onNavigate(item.screen)}
-                className="flex flex-col items-center justify-center p-2 rounded-xl hover:bg-blue-50 focus:outline-none transition-colors group"
+                className="flex flex-col items-center justify-center p-2 rounded-xl hover:bg-blue-50 focus:outline-none transition-colors group aspect-square md:aspect-auto md:h-auto"
                 aria-label={item.label}
             >
-                <item.icon className="w-5 h-5 text-gray-400 group-hover:text-[#38a6e9] transition-colors" />
-                <span className="text-[8px] font-medium text-gray-500 mt-1 group-hover:text-[#38a6e9] truncate w-full text-center">{item.label}</span>
+                <div className="bg-gray-50 group-hover:bg-white p-2 rounded-full mb-1 group-hover:shadow-sm transition-all">
+                    <item.icon className="w-5 h-5 text-gray-500 group-hover:text-[#38a6e9] transition-colors" />
+                </div>
+                <span className="text-[9px] font-medium text-gray-500 group-hover:text-[#38a6e9] truncate w-full text-center">{item.label}</span>
             </button>
             ))}
         </nav>

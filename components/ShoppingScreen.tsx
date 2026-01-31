@@ -1,4 +1,6 @@
+
 import React from 'react';
+import { useLanguage } from '../translations';
 
 interface Shop {
     name: string;
@@ -49,13 +51,14 @@ const ShopCard: React.FC<{ shop: Shop }> = ({ shop }) => (
 
 
 const ShoppingScreen: React.FC = () => {
+    const { t } = useLanguage();
     const categories = ['General', 'Moda', 'Supermercado'];
 
     return (
         <div className="space-y-6">
             <header>
-                <h1 className="text-3xl font-bold text-momflow-text-dark">Compras</h1>
-                <p className="text-momflow-text-light">Acceso rápido a tus tiendas favoritas.</p>
+                <h1 className="text-3xl font-bold text-momflow-text-dark">{t.shopping.title}</h1>
+                <p className="text-momflow-text-light">{t.shopping.subtitle}</p>
             </header>
 
             {categories.map(category => (

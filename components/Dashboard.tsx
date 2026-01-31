@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Event, Category, CategoryConfig } from '../types';
 import { getEmpatheticMessage } from '../services/geminiService';
+import { useLanguage } from '../translations';
 
 const today = new Date();
 const y = today.getFullYear();
@@ -42,7 +44,8 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ events, categoryConfigs, onNavigateToCalendar }) => {
-  const [aiMessage, setAiMessage] = useState<string>('Cargando mensaje...');
+  const { t } = useLanguage();
+  const [aiMessage, setAiMessage] = useState<string>(t.common.loading);
   
   const categoryColorMap = useMemo(() => 
     Object.fromEntries(categoryConfigs.map(c => [c.name, c.color])),
@@ -58,12 +61,12 @@ const Dashboard: React.FC<DashboardProps> = ({ events, categoryConfigs, onNaviga
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-3xl font-bold text-momflow-text-dark">Hola, Mamá Moderna</h1>
-        <p className="text-momflow-text-light">Aquí tienes un resumen de tu día.</p>
+        <h1 className="text-3xl font-bold text-momflow-text-dark">{t.dashboard.greeting}</h1>
+        <p className="text-momflow-text-light">{t.dashboard.subtitle}</p>
       </header>
 
       <section>
-        <h2 className="text-xl font-semibold mb-3 text-momflow-text-dark">Próximos Eventos</h2>
+        <h2 className="text-xl font-semibold mb-3 text-momflow-text-dark">{t.dashboard.upcomingEvents}</h2>
         <div className="space-y-3">
           {todayEvents.length > 0 ? (
             todayEvents.map(event => (
@@ -76,14 +79,14 @@ const Dashboard: React.FC<DashboardProps> = ({ events, categoryConfigs, onNaviga
             ))
           ) : (
             <div className="text-center py-4 bg-white/50 rounded-lg">
-              <p className="text-momflow-text-light">No tienes eventos para hoy. ¡Disfruta!</p>
+              <p className="text-momflow-text-light">{t.dashboard.noEvents}</p>
             </div>
           )}
         </div>
       </section>
 
       <section className="bg-momflow-lavender p-4 rounded-xl shadow-md">
-        <h2 className="text-lg font-semibold mb-2 text-momflow-text-dark">Un Mensaje Para Ti</h2>
+        <h2 className="text-lg font-semibold mb-2 text-momflow-text-dark">{t.dashboard.messageTitle}</h2>
         <p className="text-momflow-text-dark italic">"{aiMessage}"</p>
       </section>
     </div>

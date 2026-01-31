@@ -3,17 +3,29 @@
 import { GoogleGenAI, LiveSession, Type, Modality, LiveServerMessage, FunctionDeclaration } from "@google/genai";
 
 if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable not set");
+  console.error("API_KEY environment variable not set");
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 const chatModel = ai.chats.create({ model: 'gemini-2.5-flash' });
+
+// Helper to check for 429 Resource Exhausted errors
+const isQuotaError = (error: any) => {
+    return error?.status === 429 || 
+           error?.code === 429 || 
+           (error?.message && error.message.includes('429')) || 
+           error?.status === 'RESOURCE_EXHAUSTED';
+};
 
 export const sendMessageToGemini = async (message: string) => {
   try {
     const response = await chatModel.sendMessage({ message });
     return response.text;
   } catch (error) {
+    if (isQuotaError(error)) {
+        console.warn("Gemini Quota Exceeded for sendMessage");
+        return "Lo siento, mi capacidad de respuesta está al límite en este momento (Límite de cuota excedido). Por favor, inténtalo de nuevo en unos minutos.";
+    }
     console.error("Error sending message to Gemini:", error);
     return "Lo siento, ha ocurrido un error. Inténtalo de nuevo.";
   }
@@ -27,7 +39,12 @@ export const getEmpatheticMessage = async (): Promise<string> => {
         });
         return response.text;
     } catch(e) {
-        console.error("Error fetching empathetic message:", e);
+        if (isQuotaError(e)) {
+             console.warn("Gemini Quota Exceeded for empathetic message - using fallback");
+        } else {
+             console.error("Error fetching empathetic message:", e);
+        }
+        // Fallback message so the dashboard doesn't look empty or broken
         return "Recuerda tomarte un momento para ti hoy. ¡Lo estás haciendo genial! ✨";
     }
 };
@@ -58,7 +75,10 @@ export const parseTextToEvent = async (text: string) => {
         });
         return JSON.parse(response.text);
     } catch(e) {
-        console.error("Error parsing event:", e);
+        // If quota exceeded, return null so we fall back to normal chat (which handles the error message)
+        if (!isQuotaError(e)) {
+            console.error("Error parsing event:", e);
+        }
         return null;
     }
 };
@@ -87,7 +107,9 @@ export const parseTextToTask = async (text: string) => {
         });
         return JSON.parse(response.text);
     } catch(e) {
-        console.error("Error parsing task:", e);
+        if (!isQuotaError(e)) {
+            console.error("Error parsing task:", e);
+        }
         return null;
     }
 };
@@ -112,7 +134,9 @@ export const getEventFromImage = async (base64Image: string, mimeType: string) =
         });
         return JSON.parse(response.text);
     } catch (e) {
-        console.error("Error getting event from image:", e);
+        if (!isQuotaError(e)) {
+            console.error("Error getting event from image:", e);
+        }
         return null;
     }
 }
@@ -195,7 +219,12 @@ export const getWellbeingTip = async (): Promise<string> => {
         });
         return response.text;
     } catch(e) {
-        console.error("Error fetching wellbeing tip:", e);
+        if (isQuotaError(e)) {
+             console.warn("Gemini Quota Exceeded for wellbeing tip - using fallback");
+        } else {
+            console.error("Error fetching wellbeing tip:", e);
+        }
+        // Fallback tip
         return "Tómate 5 minutos para estirar o simplemente respirar profundamente. Te lo mereces.";
     }
 };

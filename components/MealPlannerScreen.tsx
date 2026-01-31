@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { PlusIcon } from './Icons';
 import { Recipe, MealPlan, MealType } from '../types';
+import { useLanguage } from '../translations';
 
 // Mock data matching the screenshot
 const mockRecipes: Recipe[] = [
@@ -39,14 +40,18 @@ const mockRecipes: Recipe[] = [
     }
 ];
 
-const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner'];
 
 const MealPlannerScreen: React.FC = () => {
+    const { t, language } = useLanguage();
     const [view, setView] = useState<'recipes' | 'planner'>('recipes');
     const [searchQuery, setSearchQuery] = useState('');
     const [mealPlan, setMealPlan] = useState<MealPlan[]>([]);
     const [selectedDate, setSelectedDate] = useState(new Date());
+
+    const days = language === 'es' 
+        ? ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+        : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     // Helper to get current week dates
     const getWeekDates = (baseDate: Date) => {
@@ -84,7 +89,7 @@ const MealPlannerScreen: React.FC = () => {
             recipeId: recipe.id
         };
         setMealPlan(prev => [...prev, newMeal]);
-        alert(`"${recipe.title}" añadido a la cena de hoy.`);
+        alert(`"${recipe.title}" ${t.mealPlanner.addedMsg}`);
     };
 
     const renderRecipeCard = (recipe: Recipe) => (
@@ -94,8 +99,8 @@ const MealPlannerScreen: React.FC = () => {
             </div>
             <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-gray-800 text-sm truncate">{recipe.title}</h3>
-                <p className="text-xs text-gray-500 truncate">For directions visit: {recipe.source}</p>
-                <button className="text-xs text-[#FF8042] font-semibold mt-1">View</button>
+                <p className="text-xs text-gray-500 truncate">{recipe.source}</p>
+                <button className="text-xs text-[#FF8042] font-semibold mt-1">{t.common.view}</button>
             </div>
             <button 
                 onClick={() => quickAddRecipe(recipe)}
@@ -128,7 +133,7 @@ const MealPlannerScreen: React.FC = () => {
                     {mealTypes.map(type => (
                         <div key={type}>
                             <h3 className="uppercase text-xs font-bold text-gray-400 tracking-wider mb-2 px-2">
-                                {type === 'breakfast' ? 'Desayuno' : type === 'lunch' ? 'Comida' : 'Cena'}
+                                {type === 'breakfast' ? t.mealPlanner.breakfast : type === 'lunch' ? t.mealPlanner.lunch : t.mealPlanner.dinner}
                             </h3>
                             <div className="grid grid-cols-7 gap-1">
                                 {weekDates.map((date, i) => {
@@ -161,24 +166,24 @@ const MealPlannerScreen: React.FC = () => {
             {/* Header / Tabs */}
             <div className="bg-[#38a6e9] p-4 pb-8 rounded-b-[30px] shadow-lg mb-4">
                 <div className="flex justify-center mb-4">
-                    <h1 className="text-white font-bold text-lg">Set the week's menu</h1>
+                    <h1 className="text-white font-bold text-lg">{t.mealPlanner.title}</h1>
                 </div>
                 <div className="flex bg-white/20 p-1 rounded-full backdrop-blur-sm">
                     <button 
                         onClick={() => setView('recipes')}
                         className={`flex-1 py-1.5 text-sm font-semibold rounded-full transition-all ${view === 'recipes' ? 'bg-white text-[#38a6e9] shadow-sm' : 'text-white'}`}
                     >
-                        Recetas
+                        {t.mealPlanner.tabRecipes}
                     </button>
                     <button 
                         onClick={() => setView('planner')}
                         className={`flex-1 py-1.5 text-sm font-semibold rounded-full transition-all ${view === 'planner' ? 'bg-white text-[#38a6e9] shadow-sm' : 'text-white'}`}
                     >
-                        Planificador
+                        {t.mealPlanner.tabPlanner}
                     </button>
                 </div>
                 {view === 'recipes' && (
-                     <p className="text-center text-white/90 text-sm mt-3 font-medium">with just a few taps</p>
+                     <p className="text-center text-white/90 text-sm mt-3 font-medium">{t.mealPlanner.subtitle}</p>
                 )}
             </div>
 
@@ -189,7 +194,7 @@ const MealPlannerScreen: React.FC = () => {
                         <div className="relative mb-4">
                             <input 
                                 type="text" 
-                                placeholder="Search recipes" 
+                                placeholder={t.mealPlanner.searchPlaceholder} 
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full bg-gray-200 text-gray-700 px-10 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#38a6e9]"
@@ -200,25 +205,25 @@ const MealPlannerScreen: React.FC = () => {
                         {/* Filters */}
                         <div className="flex space-x-2 overflow-x-auto pb-4 mb-2 no-scrollbar">
                             <button className="px-4 py-1.5 bg-[#FF8042] text-white text-xs font-bold rounded-full whitespace-nowrap shadow-sm">
-                                Family Recipe Box
+                                {t.mealPlanner.filterFamily}
                             </button>
                             <button className="px-4 py-1.5 bg-white text-gray-600 text-xs font-bold rounded-full whitespace-nowrap border border-gray-200">
-                                Cozi Top 20
+                                {t.mealPlanner.filterTop}
                             </button>
                             <button className="px-4 py-1.5 bg-white text-gray-600 text-xs font-bold rounded-full whitespace-nowrap border border-gray-200">
-                                Under 45-Min
+                                {t.mealPlanner.filterQuick}
                             </button>
                         </div>
 
                         {/* Section Title */}
                         <div className="mb-4">
-                            <h2 className="text-lg font-bold text-gray-700 text-center">Select Recipes</h2>
+                            <h2 className="text-lg font-bold text-gray-700 text-center">{t.mealPlanner.selectTitle}</h2>
                         </div>
 
                         {/* Add New Recipe Button */}
                         <button className="flex items-center space-x-2 text-[#FF8042] font-bold mb-4 hover:opacity-80 transition-opacity">
                             <PlusIcon className="w-5 h-5" />
-                            <span>Add new recipe</span>
+                            <span>{t.mealPlanner.addRecipe}</span>
                         </button>
 
                         {/* Recipe List */}

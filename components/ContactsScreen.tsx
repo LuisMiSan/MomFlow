@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Contact } from '../types';
 import { PlusIcon, XMarkIcon, PencilSquareIcon, TrashIcon, PhoneIcon } from './Icons';
+import { useLanguage } from '../translations';
 
 interface ContactModalProps {
     contact: Omit<Contact, 'id'> | Contact | null;
@@ -11,6 +12,7 @@ interface ContactModalProps {
 }
 
 const ContactModal: React.FC<ContactModalProps> = ({ contact, onClose, onSave, existingNames }) => {
+    const { t } = useLanguage();
     const [name, setName] = useState(contact?.name || '');
     const [relation, setRelation] = useState(contact?.relation || '');
     const [phone, setPhone] = useState(contact?.phone || '');
@@ -21,7 +23,7 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onClose, onSave, e
     const handleSave = () => {
         const trimmedName = name.trim();
         if (!trimmedName || !relation.trim() || !phone.trim()) {
-            setError('Nombre, relación y teléfono son obligatorios.');
+            setError(t.common.error);
             return;
         }
         
@@ -38,33 +40,33 @@ const ContactModal: React.FC<ContactModalProps> = ({ contact, onClose, onSave, e
         <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
                 <header className="p-4 border-b border-gray-200 flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-momflow-text-dark">{isEditing ? 'Editar Contacto' : 'Añadir Contacto'}</h3>
+                    <h3 className="text-lg font-bold text-momflow-text-dark">{isEditing ? t.contacts.editTitle : t.contacts.addTitle}</h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
                         <XMarkIcon className="w-6 h-6"/>
                     </button>
                 </header>
                 <div className="p-4 space-y-4">
                     <div>
-                        <label htmlFor="contact-name" className="block text-sm font-medium text-momflow-text-light mb-1">Nombre</label>
+                        <label htmlFor="contact-name" className="block text-sm font-medium text-momflow-text-light mb-1">{t.contacts.name}</label>
                         <input id="contact-name" type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-momflow-lavender-dark focus:border-momflow-lavender-dark" />
                     </div>
                     <div>
-                        <label htmlFor="contact-relation" className="block text-sm font-medium text-momflow-text-light mb-1">Relación (Ej: Pediatra, Colegio)</label>
+                        <label htmlFor="contact-relation" className="block text-sm font-medium text-momflow-text-light mb-1">{t.contacts.relation}</label>
                         <input id="contact-relation" type="text" value={relation} onChange={(e) => setRelation(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-momflow-lavender-dark focus:border-momflow-lavender-dark" />
                     </div>
                      <div>
-                        <label htmlFor="contact-phone" className="block text-sm font-medium text-momflow-text-light mb-1">Teléfono</label>
+                        <label htmlFor="contact-phone" className="block text-sm font-medium text-momflow-text-light mb-1">{t.contacts.phone}</label>
                         <input id="contact-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-momflow-lavender-dark focus:border-momflow-lavender-dark" />
                     </div>
                     <div>
-                        <label htmlFor="contact-notes" className="block text-sm font-medium text-momflow-text-light mb-1">Notas</label>
+                        <label htmlFor="contact-notes" className="block text-sm font-medium text-momflow-text-light mb-1">{t.contacts.notes}</label>
                         <textarea id="contact-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="w-full p-2 border border-gray-300 rounded-lg focus:ring-momflow-lavender-dark focus:border-momflow-lavender-dark" />
                     </div>
                     {error && <p className="text-sm text-red-600">{error}</p>}
                 </div>
                 <footer className="p-4 bg-gray-50 flex justify-end space-x-2">
-                    <button onClick={onClose} className="px-4 py-2 bg-gray-200 text-momflow-text-dark font-semibold rounded-lg hover:bg-gray-300">Cancelar</button>
-                    <button onClick={handleSave} className="px-4 py-2 bg-momflow-coral text-white font-semibold rounded-lg hover:bg-red-400">Guardar</button>
+                    <button onClick={onClose} className="px-4 py-2 bg-gray-200 text-momflow-text-dark font-semibold rounded-lg hover:bg-gray-300">{t.common.cancel}</button>
+                    <button onClick={handleSave} className="px-4 py-2 bg-momflow-coral text-white font-semibold rounded-lg hover:bg-red-400">{t.common.save}</button>
                 </footer>
             </div>
         </div>
@@ -115,6 +117,7 @@ interface ContactsScreenProps {
 }
 
 const ContactsScreen: React.FC<ContactsScreenProps> = ({ contacts, setContacts }) => {
+    const { t } = useLanguage();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingContact, setEditingContact] = useState<Contact | null>(null);
 
@@ -144,7 +147,7 @@ const ContactsScreen: React.FC<ContactsScreenProps> = ({ contacts, setContacts }
     };
     
     const handleDeleteContact = (contactId: string) => {
-        if (window.confirm('¿Estás segura de que quieres eliminar este contacto?')) {
+        if (window.confirm(t.contacts.confirmDelete)) {
             setContacts(prev => prev.filter(c => c.id !== contactId));
         }
     };
@@ -154,15 +157,15 @@ const ContactsScreen: React.FC<ContactsScreenProps> = ({ contacts, setContacts }
         <div className="space-y-6">
             <header className="flex justify-between items-center">
                  <div>
-                    <h1 className="text-3xl font-bold text-momflow-text-dark">Contactos</h1>
-                    <p className="text-momflow-text-light">Tu agenda de confianza a mano.</p>
+                    <h1 className="text-3xl font-bold text-momflow-text-dark">{t.contacts.title}</h1>
+                    <p className="text-momflow-text-light">{t.contacts.subtitle}</p>
                 </div>
                 <button 
                     onClick={() => handleOpenModal()} 
                     className="flex items-center space-x-2 bg-momflow-lavender text-momflow-text-dark font-semibold px-4 py-2 rounded-full hover:bg-momflow-lavender-dark shadow-md"
                 >
                     <PlusIcon className="w-5 h-5" />
-                    <span>Añadir</span>
+                    <span>{t.common.add}</span>
                 </button>
             </header>
             
@@ -180,8 +183,7 @@ const ContactsScreen: React.FC<ContactsScreenProps> = ({ contacts, setContacts }
                         ))
                 ) : (
                     <div className="text-center py-16 bg-white/50 rounded-lg">
-                        <p className="text-lg text-momflow-text-light">Tu listín está vacío.</p>
-                        <p className="text-sm text-gray-400 mt-2">Usa el botón "Añadir" para empezar.</p>
+                        <p className="text-lg text-momflow-text-light">{t.contacts.empty}</p>
                     </div>
                 )}
             </div>

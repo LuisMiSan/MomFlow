@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import LinaChatScreen from './components/AssistantChat';
 import { XMarkIcon } from './components/Icons';
 import CalendarScreen from './components/CalendarScreen';
@@ -9,7 +9,9 @@ import TasksScreen from './components/TasksScreen';
 import ContactsScreen from './components/ContactsScreen';
 import ShoppingScreen from './components/ShoppingScreen';
 import MealPlannerScreen from './components/MealPlannerScreen';
-import { TaskList, Event, Category, CategoryConfig, Contact, FamilyProfile } from './types';
+import Dashboard from './components/Dashboard';
+import { TaskList, Event, CategoryConfig, Contact, FamilyProfile } from './types';
+import { LanguageProvider, useLanguage } from './translations';
 
 type Screen = 'calendar' | 'tasks' | 'wellbeing' | 'contacts' | 'shopping' | 'settings' | 'meals';
 
@@ -58,13 +60,13 @@ const DEFAULT_CATEGORY_CONFIGS: CategoryConfig[] = [
 ];
 
 const initialFamilyProfile: FamilyProfile = {
-    name: 'The Keller Crew 💕',
+    name: 'Mi Familia',
     photoUrl: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?q=80&w=2070&auto=format&fit=crop',
     timezone: 'GMT-7 America/Los_Angeles',
     members: [
-        { id: 'm1', name: 'Kevin', color: '#ff8042' }, 
-        { id: 'm2', name: 'Jason', color: '#ffc658' },
-        { id: 'm3', name: 'Sarah', color: '#8884d8' } 
+        { id: 'm1', name: 'Mamá', color: '#ff8042' }, 
+        { id: 'm2', name: 'Papá', color: '#ffc658' },
+        { id: 'm3', name: 'Hijo', color: '#8884d8' } 
     ]
 };
 
@@ -98,13 +100,16 @@ const createMockEvents = (source: 'momflow' | 'google'): Event[] => {
 const initialMomFlowEvents = createMockEvents('momflow');
 const mockGoogleEvents = createMockEvents('google');
 
-const App: React.FC = () => {
+// Inner App Component to consume Language Context
+const AppContent: React.FC = () => {
   const [modalScreen, setModalScreen] = useState<Screen | null>(null);
   const [isWhatsAppConnected, setIsWhatsAppConnected] = useState(false);
   const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState(false);
   const [taskLists, setTaskLists] = useState<TaskList[]>(initialTaskLists);
   const [momFlowEvents, setMomFlowEvents] = useState<Event[]>(initialMomFlowEvents);
   
+  const { t } = useLanguage();
+
   const [familyProfile, setFamilyProfile] = useState<FamilyProfile>(() => {
       try {
           const storedProfile = localStorage.getItem('familyflow-profile');
@@ -222,28 +227,36 @@ const App: React.FC = () => {
       localStorage.setItem('isGoogleCalendarConnected', String(newStatus));
   };
 
-  const renderModalScreen = () => {
-    if (!modalScreen) return null;
+  // Helper to translate screen names for header
+  const getScreenTitle = (screen: Screen) => {
+      switch(screen) {
+          case 'wellbeing': return t.nav.wellbeing;
+          case 'calendar': return t.nav.calendar;
+          case 'tasks': return t.nav.tasks;
+          case 'contacts': return t.nav.contacts;
+          case 'shopping': return t.nav.shopping;
+          case 'settings': return t.nav.settings;
+          case 'meals': return t.nav.meals;
+          default: return screen;
+      }
+  };
 
-    let screenComponent;
-    switch (modalScreen) {
+  const renderContent = (activeScreen: Screen | null) => {
+    switch (activeScreen) {
       case 'calendar':
-        screenComponent = <CalendarScreen 
+        return <CalendarScreen 
             events={displayedEvents} 
             setEvents={setMomFlowEvents} 
             categoryConfigs={categoryConfigs} 
             onClearInitialDate={() => {}} 
             familyProfile={familyProfile}
         />;
-        break;
       case 'tasks':
-        screenComponent = <TasksScreen taskLists={taskLists} setTaskLists={setTaskLists} onVoiceAddTask={() => {}} />;
-        break;
+        return <TasksScreen taskLists={taskLists} setTaskLists={setTaskLists} onVoiceAddTask={() => {}} />;
       case 'contacts':
-        screenComponent = <ContactsScreen contacts={contacts} setContacts={setContacts} />;
-        break;
+        return <ContactsScreen contacts={contacts} setContacts={setContacts} />;
       case 'settings':
-        screenComponent = <SettingsScreen 
+        return <SettingsScreen 
                             isWhatsAppConnected={isWhatsAppConnected} 
                             onToggleWhatsApp={handleToggleWhatsApp} 
                             isGoogleCalendarConnected={isGoogleCalendarConnected} 
@@ -254,22 +267,44 @@ const App: React.FC = () => {
                             familyProfile={familyProfile}
                             setFamilyProfile={setFamilyProfile}
                          />;
-        break;
       case 'shopping':
-          screenComponent = <ShoppingScreen />;
-          break;
+          return <ShoppingScreen />;
       case 'wellbeing':
-          screenComponent = <WellbeingScreen categoryConfigs={categoryConfigs} events={displayedEvents} />;
-          break;
+          return <WellbeingScreen categoryConfigs={categoryConfigs} events={displayedEvents} />;
       case 'meals':
-          screenComponent = <MealPlannerScreen />;
-          break;
+          return <MealPlannerScreen />;
       default:
-        return null;
+        return <Dashboard events={displayedEvents} categoryConfigs={categoryConfigs} onNavigateToCalendar={() => setModalScreen('calendar')} />;
     }
+  };
 
-    return (
-        <div className="absolute inset-0 bg-momflow-cream z-50 flex flex-col animate-slide-in-up overflow-hidden">
+  return (
+    <div className="h-screen w-full bg-momflow-cream flex flex-col md:flex-row overflow-hidden">
+      
+      {/* LEFT SIDEBAR */}
+      <div className={`w-full md:w-[400px] flex-shrink-0 h-full relative z-20 shadow-2xl transition-all duration-300 ${modalScreen ? 'hidden md:block' : 'block'}`}>
+          <LinaChatScreen
+            onNavigate={setModalScreen}
+            onAddTask={handleAddTask}
+            onAddEvent={handleAddEvent}
+            onAddContact={handleAddContact}
+            isGoogleCalendarConnected={isGoogleCalendarConnected}
+            familyProfile={familyProfile}
+          />
+      </div>
+
+      {/* RIGHT CONTENT AREA */}
+      <main className={`flex-grow bg-gray-50 h-full overflow-hidden relative ${!modalScreen ? 'hidden md:block' : 'block'}`}>
+        
+        {/* Desktop Container */}
+        <div className="hidden md:flex flex-col h-full w-full">
+            <div className="flex-1 overflow-y-auto p-8 max-w-7xl mx-auto w-full">
+                {renderContent(modalScreen)}
+            </div>
+        </div>
+
+        {/* Mobile Modal Container */}
+        <div className="md:hidden absolute inset-0 bg-momflow-cream z-50 flex flex-col animate-slide-in-up overflow-hidden">
             <style>{`
                 @keyframes slide-in-up {
                     from { transform: translateY(100%); }
@@ -277,42 +312,42 @@ const App: React.FC = () => {
                 }
                 .animate-slide-in-up { animation: slide-in-up 0.3s ease-out forwards; }
             `}</style>
-             {/* Custom header logic: Don't show standard header for Settings or Meals (which has its own hero) */}
-            {modalScreen !== 'settings' && modalScreen !== 'meals' && (
+             
+             {/* Custom Header for Mobile */}
+             {modalScreen && modalScreen !== 'settings' && modalScreen !== 'meals' && (
                 <header className="flex items-center justify-between p-2 bg-white/80 backdrop-blur-sm border-b sticky top-0 z-10">
-                    <h2 className="text-xl font-bold text-momflow-text-dark capitalize ml-2">{modalScreen === 'wellbeing' ? 'Bienestar' : modalScreen}</h2>
+                    <h2 className="text-xl font-bold text-momflow-text-dark capitalize ml-2">
+                        {getScreenTitle(modalScreen)}
+                    </h2>
                     <button onClick={() => setModalScreen(null)} className="text-gray-500 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100">
                         <XMarkIcon className="w-6 h-6" />
                     </button>
                 </header>
             )}
-             {/* Close button overlay for settings and meals */}
-             {(modalScreen === 'settings' || modalScreen === 'meals') && (
+
+             {/* Close button for fullscreen mobile modals */}
+             {modalScreen && (modalScreen === 'settings' || modalScreen === 'meals') && (
                  <button onClick={() => setModalScreen(null)} className="absolute top-4 right-4 z-20 bg-white/50 backdrop-blur-md p-2 rounded-full text-white hover:bg-white/80 transition-all shadow-lg hover:text-gray-800">
                     <XMarkIcon className="w-6 h-6" />
                 </button>
             )}
 
-            <main className={`flex-grow overflow-y-auto ${modalScreen === 'settings' || modalScreen === 'meals' ? 'p-0' : 'p-4'}`}>
-                {screenComponent}
-            </main>
+            <div className={`flex-grow overflow-y-auto ${modalScreen === 'settings' || modalScreen === 'meals' ? 'p-0' : 'p-4'}`}>
+                {renderContent(modalScreen)}
+            </div>
         </div>
-    );
-  };
 
-  return (
-    <div className="min-h-screen font-sans antialiased text-momflow-text-dark bg-momflow-cream max-w-lg mx-auto shadow-2xl flex flex-col relative overflow-hidden">
-      <LinaChatScreen
-        onNavigate={setModalScreen}
-        onAddTask={handleAddTask}
-        onAddEvent={handleAddEvent}
-        onAddContact={handleAddContact}
-        isGoogleCalendarConnected={isGoogleCalendarConnected}
-        familyProfile={familyProfile}
-      />
-      {renderModalScreen()}
+      </main>
     </div>
   );
+};
+
+const App: React.FC = () => {
+    return (
+        <LanguageProvider>
+            <AppContent />
+        </LanguageProvider>
+    );
 };
 
 export default App;

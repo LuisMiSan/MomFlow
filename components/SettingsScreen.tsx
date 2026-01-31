@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { WhatsAppIcon, GoogleIcon, CameraIcon, TrashIcon, PlusIcon } from './Icons';
 import { CategoryConfig, Event, FamilyProfile, FamilyMember } from '../types';
+import { useLanguage } from '../translations';
 
 const PRESET_COLORS = [
     '#ff8042', // Orange (Kevin)
@@ -32,7 +33,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
   familyProfile,
   setFamilyProfile
 }) => {
-    
+    const { t, language, toggleLanguage } = useLanguage();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const handleNameChange = (val: string) => {
         setFamilyProfile(prev => ({ ...prev, name: val }));
     };
@@ -54,8 +57,29 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
     };
 
     const removeMember = (id: string) => {
-        if(window.confirm('¿Eliminar este miembro?')) {
+        if(window.confirm(t.settings.deleteMemberConfirm)) {
             setFamilyProfile(prev => ({ ...prev, members: prev.members.filter(m => m.id !== id) }));
+        }
+    };
+
+    const handlePhotoClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                alert(t.settings.photoSizeError);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const result = reader.result as string;
+                setFamilyProfile(prev => ({ ...prev, photoUrl: result }));
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -71,8 +95,21 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
         />
         <div className="absolute inset-0 bg-black/10"></div>
         
+        {/* Hidden File Input */}
+        <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            accept="image/*"
+            onChange={handleFileChange}
+        />
+
         {/* Camera Icon Overlay */}
-        <button className="absolute bottom-16 right-6 bg-white/20 backdrop-blur-md p-2 rounded-full hover:bg-white/40 transition-colors">
+        <button 
+            onClick={handlePhotoClick}
+            className="absolute bottom-16 right-6 bg-white/20 backdrop-blur-md p-2 rounded-full hover:bg-white/40 transition-colors z-20"
+            title="Cambiar foto de familia"
+        >
             <CameraIcon className="w-6 h-6 text-white" />
         </button>
       </div>
@@ -86,14 +123,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 type="text" 
                 value={familyProfile.name}
                 onChange={(e) => handleNameChange(e.target.value)}
-                className="text-3xl font-bold text-[#2c3e50] text-center w-full focus:outline-none bg-transparent"
+                placeholder={t.settings.familyName}
+                className="text-3xl font-bold text-[#2c3e50] text-center w-full focus:outline-none bg-transparent placeholder-gray-300 border-b border-transparent focus:border-gray-200 transition-colors"
               />
-              <p className="text-gray-400 text-[10px] mt-1 uppercase tracking-widest font-bold">Family Name</p>
+              <p className="text-gray-400 text-[10px] mt-1 uppercase tracking-widest font-bold">{t.settings.familyName}</p>
           </div>
 
           {/* Member Settings Label */}
           <div className="w-full mb-4">
-              <h3 className="text-gray-400 text-[10px] uppercase tracking-widest font-bold pl-2">Member Settings</h3>
+              <h3 className="text-gray-400 text-[10px] uppercase tracking-widest font-bold pl-2">{t.settings.members}</h3>
           </div>
 
           {/* Members List */}
@@ -121,7 +159,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                 value={member.name}
                                 onChange={(e) => handleMemberChange(member.id, 'name', e.target.value)}
                                 className="flex-1 bg-transparent border-none focus:outline-none text-gray-700 font-medium placeholder-gray-300 h-full"
-                                placeholder="Name"
+                                placeholder={t.contacts.name}
                             />
                        </div>
                        
@@ -136,22 +174,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 className="w-full h-12 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 hover:border-[#38a6e9] hover:text-[#38a6e9] transition-colors flex items-center justify-center space-x-2 text-sm font-semibold"
             >
                 <PlusIcon className="w-4 h-4" />
-                <span>Add Member</span>
+                <span>{t.settings.addMember}</span>
             </button>
           </div>
 
-          {/* Theme Selector (Fixed 'Blue' style from image) */}
-           <div className="w-full flex items-center justify-center space-x-2 mb-8">
-               <div className="flex items-center space-x-2 px-4 py-2 bg-blue-50 rounded-full cursor-pointer border border-blue-100">
-                   <div className="w-3 h-3 rounded-full bg-[#38a6e9]"></div>
-                   <span className="text-[#38a6e9] font-bold text-sm">Blue</span>
-               </div>
-           </div>
-
-           {/* Integrations (Kept discreet at bottom) */}
+           {/* Integrations & Language */}
            <div className="w-full border-t border-gray-100 pt-6">
-                <h3 className="text-gray-400 text-[10px] uppercase tracking-widest font-bold pl-2 mb-3">Integrations</h3>
-                <div className="flex space-x-3 overflow-x-auto pb-2">
+                <h3 className="text-gray-400 text-[10px] uppercase tracking-widest font-bold pl-2 mb-3">{t.settings.integrations}</h3>
+                <div className="flex flex-wrap gap-3">
                     <button 
                         onClick={onToggleWhatsApp}
                         className={`flex items-center space-x-2 px-3 py-2 rounded-lg border ${isWhatsAppConnected ? 'border-green-200 bg-green-50 text-green-700' : 'border-gray-100 bg-white text-gray-500'}`}
@@ -165,6 +195,20 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     >
                         <GoogleIcon className="w-4 h-4" />
                         <span className="text-xs font-semibold">Calendar</span>
+                    </button>
+                </div>
+           </div>
+
+           {/* Language Switcher */}
+           <div className="w-full border-t border-gray-100 pt-6 mt-2">
+                <h3 className="text-gray-400 text-[10px] uppercase tracking-widest font-bold pl-2 mb-3">{t.settings.language}</h3>
+                <div className="flex">
+                    <button 
+                        onClick={toggleLanguage}
+                        className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-100 bg-white hover:bg-gray-50 text-gray-700 transition-colors"
+                    >
+                        <span className="text-xl">{language === 'es' ? '🇪🇸' : '🇺🇸'}</span>
+                        <span className="text-sm font-semibold">{language === 'es' ? 'Español' : 'English'}</span>
                     </button>
                 </div>
            </div>
